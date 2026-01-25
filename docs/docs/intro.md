@@ -1,11 +1,39 @@
 ---
 slug: /
 sidebar_position: 1
+title: Introduction
 ---
 
-# Introduction
+# Jasper Documentation
 
-Jasper is an open-source chemical process simulation engine designed for modern web applications.
+Open-source chemical process simulation engine for modern web applications.
+
+<div className="card-grid">
+  <a className="card" href="/getting-started/quickstart">
+    <h3>Quick Start</h3>
+    <p>Get up and running with Jasper in minutes. Learn the basics of building process flowsheets.</p>
+  </a>
+  <a className="card" href="/thermodynamics/overview">
+    <h3>Thermodynamics</h3>
+    <p>Heat capacity, enthalpy, and vapor-liquid equilibrium calculations.</p>
+  </a>
+  <a className="card" href="/unit-operations/feed">
+    <h3>Unit Operations</h3>
+    <p>Feed, mixer, flash, heater, reactor, distillation, and more equipment models.</p>
+  </a>
+  <a className="card" href="/components/available-components">
+    <h3>Component Database</h3>
+    <p>50+ chemicals with validated property data including Antoine coefficients.</p>
+  </a>
+  <a className="card" href="/api/schema">
+    <h3>API Reference</h3>
+    <p>TypeScript types and simulation engine interface documentation.</p>
+  </a>
+  <a className="card" href="/contributing/development-setup">
+    <h3>Contributing</h3>
+    <p>Development setup, adding new unit operations, and contribution guidelines.</p>
+  </a>
+</div>
 
 ## What is Jasper?
 
@@ -16,45 +44,6 @@ Jasper provides a complete toolkit for chemical process simulation:
 - **Component database** - 50+ chemicals with validated property data
 - **Equipment sizing** - Preliminary sizing correlations for common equipment
 - **Cost estimation** - Order-of-magnitude capital cost estimates
-
-## Quick Start
-
-### Installation
-
-```bash
-npm install @jasper-technology/simulation
-```
-
-### Basic Usage
-
-```typescript
-import { runSimulation } from '@jasper-technology/simulation';
-
-const result = runSimulation({
-  components: ['H2O', 'C2H5OH'],
-  streams: [
-    {
-      id: 'feed',
-      T: 25,  // °C
-      P: 1,   // bar
-      flow: 100,  // kmol/h
-      composition: { H2O: 0.5, C2H5OH: 0.5 }
-    }
-  ],
-  blocks: [
-    {
-      id: 'heater',
-      type: 'Heater',
-      inlet: 'feed',
-      outlet: 'heated',
-      params: { outletT: 80 }  // °C
-    }
-  ]
-});
-
-console.log(result.streams.heated);
-// { T: 353.15, P: 1, flow: 100, composition: {...}, H: ... }
-```
 
 ## Architecture
 
@@ -69,7 +58,7 @@ The simulation engine uses a **sequential modular** approach:
 
 Visit [jaspertech.org](https://jaspertech.org) to use the full visual process simulator with drag-and-drop flowsheet editing.
 
-## Contributing
+## Open Source
 
 Jasper is open source under the MIT license. Contributions are welcome:
 

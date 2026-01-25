@@ -48,6 +48,10 @@ const config: Config = {
     },
     navbar: {
       title: 'Jasper',
+      logo: {
+        alt: 'Jasper Logo',
+        src: 'img/jasper-logo.svg',
+      },
       items: [
         {
           type: 'docSidebar',
