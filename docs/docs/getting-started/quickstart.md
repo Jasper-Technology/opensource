@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# Quick Start
+# Quickstart
 
 Get up and running with Jasper simulation engine.
 
@@ -14,8 +14,6 @@ npm install @jasper-technology/simulation
 
 ## Basic Usage
 
-### Create a Simple Flowsheet
-
 ```typescript
 import { runSimulation } from '@jasper-technology/simulation';
 
@@ -24,8 +22,8 @@ const result = runSimulation({
   streams: [
     {
       id: 'feed',
-      T: 25,  // C
-      P: 1,   // bar
+      T: 25,      // °C
+      P: 1,       // bar
       flow: 100,  // kmol/h
       composition: { H2O: 0.5, C2H5OH: 0.5 }
     }
@@ -36,7 +34,7 @@ const result = runSimulation({
       type: 'Heater',
       inlet: 'feed',
       outlet: 'heated',
-      params: { outletT: 80 }  // C
+      params: { outletT: 80 }
     }
   ]
 });
@@ -44,39 +42,20 @@ const result = runSimulation({
 console.log(result.streams.heated);
 ```
 
-### Flash Separation
-
-```typescript
-const flashResult = runSimulation({
-  components: ['nC6', 'nC7', 'nC8'],
-  streams: [
-    {
-      id: 'feed',
-      T: 100,
-      P: 2,
-      flow: 100,
-      composition: { nC6: 0.3, nC7: 0.4, nC8: 0.3 }
-    }
-  ],
-  blocks: [
-    {
-      id: 'flash',
-      type: 'Flash',
-      inlet: 'feed',
-      vaporOutlet: 'vapor',
-      liquidOutlet: 'liquid',
-      params: { T: 80, P: 1 }
-    }
-  ]
-});
-```
-
 ## Visual Editor
 
-For a full drag-and-drop experience, visit [jaspertech.org](https://jaspertech.org) to use the visual process simulator.
+For drag-and-drop flowsheet editing, visit [jaspertech.org](https://jaspertech.org).
+
+### Switching to Rigorous Mode
+
+In the visual editor, use the **engine toggle in the toolbar** to switch between Quick and Rigorous simulation modes. Rigorous mode uses the IDAES backend for equation-oriented solving with advanced thermodynamic models.
+
+:::note
+Rigorous mode requires the IDAES backend to be online. The first request after a period of inactivity may take ~30 seconds while the backend wakes up.
+:::
 
 ## Next Steps
 
-- [Thermodynamics Overview](/thermodynamics/overview) - Learn about the calculation methods
-- [Unit Operations](/unit-operations/feed) - Explore available equipment models
-- [Component Database](/components/available-components) - View available chemicals
+- [Thermodynamics](/thermodynamics/overview) - Learn about calculation methods
+- [Unit Operations](/unit-operations/feed) - Explore equipment models
+- [Component Database](/components/database) - View available chemicals
