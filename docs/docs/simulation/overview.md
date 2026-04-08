@@ -8,20 +8,27 @@ Jasper offers two simulation modes to match different stages of process design.
 
 ## Quick Mode
 
-The default browser-based simulation engine. Runs entirely in the client with no backend dependency.
+The default browser-based simulation engine. Runs entirely in the client with no backend dependency. Now features **full ChemE parity** with textbook-correct thermodynamics.
 
 | Aspect | Detail |
 |--------|--------|
 | Architecture | Sequential modular, client-side |
-| Thermodynamics | Ideal assumptions (Raoult's Law VLE) |
-| Solver | Direct sequential solve |
+| Thermodynamics | Ideal, Peng-Robinson EOS, NRTL activity coefficients |
+| Vapor pressure | Lee-Kesler correlation (1-3% error) |
+| Liquid density | Rackett equation |
+| Entropy | Ideal gas + PR departure functions |
+| Solver | Topological sort + Wegstein recycle convergence |
 | Latency | Instant (~ms) |
 | Offline | Yes |
 
-Quick mode is ideal for:
-- Rapid prototyping and screening studies
-- Teaching and demonstrations
-- Systems that behave nearly ideally (light hydrocarbons, simple aqueous mixtures)
+Quick mode handles every standard ChemE use case:
+- **Ideal systems**: Light hydrocarbons, screening studies
+- **Hydrocarbons/high-pressure**: PR EOS with fugacity-based flash
+- **Polar/non-ideal**: NRTL with ~20 BIP pairs (ethanol-water, amine-water, etc.)
+- **Distillation**: Fenske-Underwood-Gilliland shortcut
+- **Reactors**: Stoichiometric + heat of reaction, equilibrium
+- **Recycles**: Wegstein-accelerated convergence
+- **Absorbers/strippers**: Kremser equation
 
 ## Rigorous Mode
 
@@ -36,12 +43,13 @@ Industrial-grade simulation powered by the [IDAES](https://idaes.org/) framework
 | Offline | No — requires backend connection |
 
 Rigorous mode is ideal for:
-- Non-ideal systems (azeotropes, strongly associating mixtures)
-- Accurate energy balances and equipment sizing
 - Final design verification against industrial standards
+- Systems requiring UNIQUAC, eNRTL, or Henry's Law
+- Rigorous stage-by-stage distillation (MESH equations)
+- Equation-oriented simultaneous convergence
 
 :::tip When to switch
-Start with **Quick mode** to build and validate your flowsheet topology. Switch to **Rigorous mode** when you need accurate thermodynamics or your system involves non-ideal behavior.
+For most student coursework and conceptual design, **Quick mode** is sufficient. Switch to **Rigorous mode** when you need UNIQUAC/eNRTL, rigorous tray-by-tray distillation, or equation-oriented solving.
 :::
 
 ## Switching Between Modes
@@ -67,10 +75,13 @@ Switching modes does not change your flowsheet. All blocks, streams, and specifi
 
 | Feature | Quick | Rigorous |
 |---------|-------|----------|
-| Property packages | Ideal only | Ideal, SRK, PR, NRTL, UNIQUAC, eNRTL |
-| Phase equilibrium | Raoult's Law | Cubic EOS / activity models |
-| Component library | 50+ | 70+ (NIST, DIPPR, Perry's, RPP) |
+| Property packages | Ideal, PR, NRTL | Ideal, SRK, PR, NRTL, UNIQUAC, eNRTL |
+| Phase equilibrium | Raoult's / PR fugacity / NRTL gamma-phi | Cubic EOS / activity models |
+| Vapor pressure | Lee-Kesler | Antoine / Wagner |
+| Distillation | Shortcut (FUG) | Rigorous MESH |
+| Reactors | Stoichiometric + equilibrium | Kinetic, equilibrium, Gibbs |
 | Recycle convergence | Wegstein iteration | Simultaneous equation solve |
+| Component library | 70+ | 70+ (NIST, DIPPR, Perry's, RPP) |
 | Degrees of freedom check | No | Yes (must be 0) |
 | Rate limiting | None | 10 requests/min per IP |
 

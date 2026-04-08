@@ -1,109 +1,55 @@
 ---
-sidebar_position: 5
+sidebar_position: 4
 ---
 
 # Flash Drum
 
-A flash drum separates a feed stream into vapor and liquid phases at specified temperature and pressure.
+Separates feed into vapor and liquid phases using rigorous VLE calculations from the active property package.
 
 ## Parameters
 
 | Parameter | Type | Unit | Description |
 |-----------|------|------|-------------|
-| T | Quantity | C, K, F | Flash temperature |
-| P | Quantity | bar, Pa, psi | Flash pressure |
+| T | Quantity | °C, K | Flash temperature (defaults to inlet T) |
+| P | Quantity | bar, Pa | Flash pressure (defaults to inlet P) |
 
-## Calculation Method
+## Calculation
 
-1. Convert inlet stream to flash conditions (T, P)
-2. Calculate K-values using Raoult's Law
-3. Solve Rachford-Rice equation for vapor fraction
-4. Determine vapor and liquid compositions
-5. Calculate outlet stream enthalpies
-
-### Material Balance
-
-```
-F = V + L
-F * z_i = V * y_i + L * x_i
-```
-
-### Phase Equilibrium
-
-```
-y_i = K_i * x_i
-K_i = Psat_i(T) / P
-```
-
-### Energy Balance
-
-```
-F * H_F = V * H_V + L * H_L + Q
-```
-
-For adiabatic flash, Q = 0.
-
-## Implementation
-
-```typescript
-// src/sim/blocks/flash.ts
-
-export function solveFlash(
-  inlet: StreamData,
-  params: FlashParams
-): { vapor: StreamData; liquid: StreamData } {
-  const T_K = params.T;
-  const P_Pa = params.P;
-
-  // Perform flash calculation
-  const result = flash(inlet.composition, T_K, P_Pa);
-
-  // Calculate outlet flows
-  const vaporFlow = inlet.flow * result.V;
-  const liquidFlow = inlet.flow * (1 - result.V);
-
-  // Calculate enthalpies
-  const H_V = getMixtureEnthalpy(result.y, T_K, 'V');
-  const H_L = getMixtureEnthalpy(result.x, T_K, 'L');
-
-  return {
-    vapor: {
-      T: T_K,
-      P: P_Pa,
-      flow: vaporFlow,
-      composition: result.y,
-      phase: 'V',
-      H: H_V,
-    },
-    liquid: {
-      T: T_K,
-      P: P_Pa,
-      flow: liquidFlow,
-      composition: result.x,
-      phase: 'L',
-      H: H_L,
-    },
-  };
-}
-```
+1. Get K-values from property package: `pkg.flash(z, T, P, components)`
+   - **Ideal**: `Ki = Psat_i(T) / P` (Lee-Kesler vapor pressure)
+   - **PR**: Iterative phi-phi flash with fugacity coefficients
+   - **NRTL**: Iterative gamma-phi flash with activity coefficients
+2. Flash result provides vapor fraction V and phase compositions (x, y)
+3. Split feed flow: `F_vap = F × V`, `F_liq = F × (1 - V)`
 
 ## Ports
 
-| Port | Direction | Phase | Description |
-|------|-----------|-------|-------------|
-| in | Input | Any | Feed stream |
-| vapor-out | Output | V | Vapor product |
-| liquid-out | Output | L | Liquid product |
+| Port | Direction | Phase |
+|------|-----------|-------|
+| in | Input | Any |
+| vapor-out | Output | V |
+| liquid-out | Output | L |
+
+## Block Results
+
+| Result | Unit | Description |
+|--------|------|-------------|
+| vaporFraction | - | Vapor fraction (0 to 1) |
+| duty | kJ/h | Heat duty (0 for adiabatic flash) |
 
 ## Example
 
 ```typescript
-const flashBlock = {
+const flash = {
   id: 'flash-1',
   type: 'Flash',
   params: {
-    T: { kind: 'quantity', q: { value: 50, unit: 'C' } },
-    P: { kind: 'quantity', q: { value: 1, unit: 'bar' } }
+    T: { kind: 'quantity', q: { value: 80, unit: 'C' } },
+    P: { kind: 'quantity', q: { value: 1, unit: 'bar' } },
   }
 };
 ```
+
+With NRTL and an ethanol-water feed at 81°C / 1 atm, the flash correctly predicts:
+- Vapor enriched in ethanol (y_EtOH > z_EtOH)
+- Activity coefficient effects from NRTL BIPs

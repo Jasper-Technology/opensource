@@ -4,7 +4,7 @@ sidebar_position: 8
 
 # Reactors
 
-Jasper supports seven reactor types. All use IDAES reactor models in rigorous mode.
+Jasper supports seven reactor types. In Quick mode, all reactor types support stoichiometric conversion with heat of reaction and adiabatic/isothermal modes. REquil and RGibbs additionally compute equilibrium extent from Keq. Rigorous mode uses IDAES reactor models.
 
 ## RCSTR — Continuous Stirred Tank Reactor
 
@@ -70,6 +70,61 @@ Full Gibbs free energy minimization with no reaction specification required.
 |-----------|------|------|-------------|
 | T | Quantity | °C, K | Operating temperature |
 | P | Quantity | bar, Pa | Operating pressure |
+
+## Quick Mode Features
+
+### Heat of Reaction
+
+All reactor types compute heat of reaction at temperature T:
+
+```
+ΔHrxn(T) = Σ(νi · Hf,i) + ∫[Σ(νi · Cp,i)]dT from 298.15K to T
+```
+
+### Adiabatic Mode (default)
+
+Outlet temperature changes due to reaction heat:
+
+```
+Tout = Tin - Qrxn / (F · Cp,mix)
+```
+
+Exothermic reactions (ΔH < 0) raise the outlet temperature. Endothermic reactions lower it.
+
+### Isothermal Mode
+
+Set `mode: 'isothermal'` in params. Outlet T equals inlet T; the heat duty equals -Qrxn.
+
+### Equilibrium (REquil / RGibbs)
+
+For equilibrium reactions, the extent is found by bisection on:
+
+```
+Keq = exp(-ΔG / RT)
+```
+
+Until the reaction quotient Q equals Keq.
+
+### Example: Water-Gas Shift
+
+```typescript
+// CO + H2O → CO2 + H2, ΔH = -41.2 kJ/mol
+reactions: [{
+  id: 'wgs',
+  stoichiometry: { CO: -1, H2O: -1, CO2: 1, H2: 1 },
+  type: 'rate',
+}]
+// With 90% conversion, adiabatic mode → outlet T rises
+```
+
+### Block Results
+
+| Result | Unit | Description |
+|--------|------|-------------|
+| duty | kJ/h | Heat duty (0 for adiabatic) |
+| conversion | - | Actual conversion achieved |
+| Q_rxn | kJ/h | Total heat of reaction |
+| T_out | K | Outlet temperature |
 
 ## Common Ports
 

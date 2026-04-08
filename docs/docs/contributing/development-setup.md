@@ -25,25 +25,24 @@ cd opensource
 opensource/
 ├── src/
 │   ├── core/
-│   │   └── schema.ts       # Zod type definitions
+│   │   └── schema.ts                    # Zod type definitions
 │   └── sim/
-│       ├── engine-v2.ts    # Main simulation engine
-│       ├── converter.ts    # Schema conversion
-│       ├── validator.ts    # Flowsheet validation
-│       ├── sizing.ts       # Equipment sizing
-│       ├── economics.ts    # Cost estimation
-│       ├── blocks/         # Unit operation models
-│       │   ├── feed.ts
-│       │   ├── mixer.ts
-│       │   ├── flash.ts
-│       │   └── ...
-│       ├── thermo/         # Thermodynamic calculations
-│       │   ├── properties.ts
-│       │   ├── vle.ts
-│       │   └── componentDatabase.ts
-│       └── solver/
-│           └── blockSolver.ts
-├── docs/                   # Documentation (Docusaurus)
+│       ├── solver/
+│       │   └── blockSolver.ts           # Sequential modular solver
+│       ├── thermo/
+│       │   ├── properties.ts            # Cp, enthalpy, entropy, Pvap, density
+│       │   ├── pengRobinson.ts          # Peng-Robinson EOS
+│       │   ├── nrtl.ts                  # NRTL activity coefficients
+│       │   ├── bipDatabase.ts           # Binary interaction parameters
+│       │   ├── propertyMethod.ts        # PropertyPackage interface + factory
+│       │   ├── componentDatabase.ts     # 70+ component data
+│       │   └── __tests__/
+│       │       └── quickmode-parity.test.ts
+│       ├── engine-v2.ts                 # Simulation engine orchestration
+│       ├── sizing.ts                    # Equipment sizing
+│       ├── economics.ts                 # Cost estimation
+│       └── blocks/                      # Legacy unit operation models
+├── docs/                                # Documentation (Docusaurus)
 ├── CONTRIBUTING.md
 ├── LICENSE
 └── README.md
@@ -52,13 +51,11 @@ opensource/
 ## Running Tests
 
 ```bash
-npm test
-```
+# Thermodynamics + solver parity tests (16 tests)
+npx tsx src/sim/thermo/__tests__/quickmode-parity.test.ts
 
-## Building
-
-```bash
-npm run build
+# Type checking
+npx tsc --noEmit
 ```
 
 ## Code Style
@@ -106,17 +103,21 @@ npm start
 
 ### High Priority
 
-- **Peng-Robinson EOS** - Replace ideal gas for vapor phase
-- **Activity coefficients** - NRTL or UNIQUAC for non-ideal liquids
-- **More unit operations** - Absorption column, packed column
+- **Wilson/UNIQUAC** activity coefficient models
+- **Rigorous distillation** — stage-by-stage MESH equations
+- **Henry's Law** for dissolved gases
 
 ### Medium Priority
 
-- **Property database expansion** - Add more chemicals
-- **Steam tables** - IAPWS-IF97 implementation
-- **Documentation** - Examples and tutorials
+- **Expand BIP database** beyond ~20 pairs
+- **UNIFAC** group contribution method
+- **Steam tables** (IAPWS-IF97)
 
-### Low Priority
+### Completed
 
-- **Performance optimization** - Solver speed improvements
-- **Additional cost correlations** - More equipment types
+- ~~Peng-Robinson EOS~~ — `pengRobinson.ts`
+- ~~NRTL activity coefficients~~ — `nrtl.ts` + `bipDatabase.ts`
+- ~~Shortcut distillation~~ — FUG in `blockSolver.ts`
+- ~~Reactor heat of reaction~~ — `properties.ts`
+- ~~Recycle convergence~~ — Wegstein in `blockSolver.ts`
+- ~~Kremser absorber/stripper~~ — `blockSolver.ts`

@@ -4,9 +4,9 @@ sidebar_position: 4
 
 # Property Packages
 
-Property packages define the thermodynamic models used to calculate phase equilibrium, enthalpies, and densities in [Rigorous mode](../simulation/rigorous-mode.md). Select a package via the **property method selector in the toolbar**.
+Property packages define the thermodynamic models used to calculate phase equilibrium, enthalpies, and densities. In Quick mode, three packages are available natively. Rigorous mode adds UNIQUAC and eNRTL via the IDAES backend.
 
-## Available Packages
+## Quick Mode Packages (In-Browser)
 
 ### Ideal
 
@@ -15,13 +15,61 @@ Simple property calculations assuming ideal gas and ideal liquid behavior.
 | Aspect | Detail |
 |--------|--------|
 | VLE model | Raoult's Law: `Ki = Psat,i(T) / P` |
-| Vapor phase | Ideal gas |
-| Liquid phase | Ideal solution |
+| Vapor pressure | Lee-Kesler correlation (boiling-point anchored, 1-3% error) |
+| Liquid density | Rackett equation |
+| Enthalpy | Ideal gas: `H = Hf + ∫Cp dT` |
+| Entropy | `S = ∫(Cp/T)dT - R·ln(P/Pref)` |
 | Best for | Light gases, similar-molecule mixtures, screening studies |
 
 :::tip
 Use Ideal for initial flowsheet debugging. It converges fastest and helps isolate topology issues from thermodynamic issues.
 :::
+
+### PR (Peng-Robinson)
+
+The industry-standard cubic EOS for oil and gas applications. **Now available in Quick mode.**
+
+| Aspect | Detail |
+|--------|--------|
+| EOS | `P = RT/(V-b) - a(T)/[V(V+b) + b(V-b)]` |
+| Flash | Phi-phi: iterative K from fugacity coefficient ratios |
+| Enthalpy | Ideal gas + PR departure function |
+| Entropy | Ideal gas + PR departure function |
+| Density | From PR compressibility factor Z |
+| Best for | Hydrocarbons, natural gas, high-pressure, supercritical |
+
+PR provides rigorous VLE via fugacity coefficients, solving the cubic equation analytically (Cardano's method) and selecting the smallest Z root for liquid, largest for vapor.
+
+### NRTL (Non-Random Two-Liquid)
+
+Activity coefficient model for non-ideal liquid mixtures. **Now available in Quick mode.**
+
+| Aspect | Detail |
+|--------|--------|
+| Liquid phase | NRTL activity coefficients (gamma) |
+| VLE | Modified Raoult's: `Ki = γi · Psat,i / P` |
+| BIP database | ~20 common pairs (water-alcohol, amine-water, hydrocarbons) |
+| Vapor phase | Ideal gas |
+| Best for | Polar mixtures, alcohol-water systems, azeotropes |
+
+The NRTL flash iterates K-values with composition-dependent activity coefficients until convergence.
+
+#### Available BIP Pairs
+
+| System | Pairs |
+|--------|-------|
+| Water-Alcohol | H2O/EtOH, H2O/MeOH |
+| Water-Organic | H2O/Acetone, H2O/Acetic acid, H2O/Ethyl acetate |
+| Amine-Water | MEA/H2O, DEA/H2O, MDEA/H2O |
+| Hydrocarbon | Benzene/Cyclohexane, Benzene/Toluene, n-Hexane/Benzene |
+| Alcohol-Organic | EtOH/Benzene, MeOH/Chloroform, MeOH/Benzene |
+| Organic-Organic | Acetone/Chloroform, Acetone/Benzene |
+
+:::warning
+Pairs without BIP data fall back to ideal behavior (γ = 1). If your system needs specific BIPs not in the database, use Rigorous mode or contribute new BIPs.
+:::
+
+## Rigorous Mode Packages (IDAES Backend)
 
 ### SRK (Soave-Redlich-Kwong)
 
@@ -30,103 +78,53 @@ Cubic equation of state with Soave's alpha function.
 | Aspect | Detail |
 |--------|--------|
 | EOS | `P = RT/(V-b) - a(T)/[V(V+b)]` |
-| Vapor phase | SRK EOS |
-| Liquid phase | SRK EOS |
 | Best for | Hydrocarbons, natural gas processing, refinery applications |
-
-SRK handles non-ideal vapor behavior well and is the standard choice for hydrocarbon systems at moderate pressures.
-
-### PR (Peng-Robinson)
-
-The industry-standard cubic EOS for oil and gas applications.
-
-| Aspect | Detail |
-|--------|--------|
-| EOS | `P = RT/(V-b) - a(T)/[V(V+b) + b(V-b)]` |
-| Vapor phase | PR EOS |
-| Liquid phase | PR EOS |
-| Best for | Oil & gas, high-pressure systems, supercritical fluids |
-
-PR provides better liquid density predictions than SRK, particularly near the critical point. It is the default choice for most industrial hydrocarbon simulations.
-
-### NRTL (Non-Random Two-Liquid)
-
-Activity coefficient model for non-ideal liquid mixtures.
-
-| Aspect | Detail |
-|--------|--------|
-| Liquid phase | NRTL activity coefficients |
-| Vapor phase | Ideal gas (or PR for high pressure) |
-| Parameters | Binary interaction parameters (alpha, tau) |
-| Best for | Polar mixtures, alcohol-water systems, azeotropes |
-
-:::warning
-NRTL requires binary interaction parameters for each component pair. If parameters are unavailable for your system, the solver falls back to **Ideal**.
-:::
 
 ### UNIQUAC (Universal Quasi-Chemical)
 
-Activity coefficient model based on local composition theory with surface area and volume parameters.
+Activity coefficient model based on local composition theory.
 
 | Aspect | Detail |
 |--------|--------|
-| Liquid phase | UNIQUAC activity coefficients |
-| Vapor phase | Ideal gas (or PR for high pressure) |
 | Parameters | Binary interaction parameters, molecular r and q values |
-| Best for | Complex mixtures, polymer solutions, systems with molecules of very different sizes |
-
-:::warning
-Falls back to **Ideal** if binary interaction parameters are not available for the selected component pair.
-:::
+| Best for | Complex mixtures, polymer solutions, very different molecule sizes |
 
 ### eNRTL (Electrolyte NRTL)
 
-Extended NRTL model for systems containing ionic species.
+Extended NRTL model for ionic species.
 
 | Aspect | Detail |
 |--------|--------|
-| Liquid phase | eNRTL activity coefficients (ion-molecule, ion-ion interactions) |
-| Vapor phase | Ideal gas |
 | Parameters | Electrolyte binary interaction parameters |
-| Best for | Acid gas treating (CO2/H2S in amine), saline solutions, electrolyte systems |
-
-:::warning
-Falls back to **Ideal** if electrolyte interaction parameters are not available.
-:::
+| Best for | Acid gas treating (CO2/H2S in amine), saline solutions |
 
 ## Selection Guide
 
-| System Type | Recommended Package |
-|-------------|-------------------|
-| Light hydrocarbons, natural gas | SRK or PR |
-| Heavy hydrocarbons, refinery | PR |
-| High-pressure / supercritical | PR |
-| Alcohol-water, polar organics | NRTL |
-| Azeotropic distillation | NRTL |
-| Polymer solutions, mixed-size molecules | UNIQUAC |
-| Amine gas treating | eNRTL |
-| Screening / debugging | Ideal |
+| System Type | Quick Mode | Rigorous |
+|-------------|-----------|----------|
+| Light hydrocarbons, natural gas | PR | SRK or PR |
+| High-pressure / supercritical | PR | PR |
+| Alcohol-water, polar organics | NRTL | NRTL |
+| Azeotropic distillation | NRTL | NRTL |
+| Amine gas treating | NRTL | eNRTL |
+| Polymer solutions | Ideal | UNIQUAC |
+| Screening / debugging | Ideal | Ideal |
 
-## How to Select
+## Implementation
 
-1. Open the editor toolbar above the flowsheet canvas.
-2. Click the **property method selector**.
-3. Choose a property package.
-4. Press **Run**.
+The Quick mode engine uses a `PropertyPackage` interface:
 
-The property package applies globally to the entire flowsheet. All unit operations and streams use the same thermodynamic model.
+```typescript
+interface PropertyPackage {
+  calculateKValues(components, T, P): Record<string, number>;
+  flash(z, T, P, components): FlashResult;
+  liquidDensity(composition, T, P): number;
+  vaporDensity(composition, T, P): number;
+  mixtureEnthalpy(composition, T, P, phase?): number;
+  mixtureEntropy(composition, T, P, phase?): number;
+}
+```
 
-:::info
-The property method selector only appears when **Rigorous mode** is active. Quick mode always uses the Ideal package.
-:::
+Factory: `getPropertyPackage('PR')` returns the appropriate implementation.
 
-## Component Database
-
-Rigorous mode provides **70+ validated components** sourced from:
-
-- **NIST** — National Institute of Standards and Technology
-- **DIPPR** — DIPPR 801 Database
-- **Perry's Chemical Engineers' Handbook** — critical properties, heat capacity correlations
-- **RPP** (Reid, Prausnitz, Poling) — equation of state parameters, interaction coefficients
-
-Each component includes: molecular weight, critical temperature, critical pressure, acentric factor, heat capacity coefficients, Antoine coefficients, and (where available) binary interaction parameters for NRTL/UNIQUAC.
+Source: `src/sim/thermo/propertyMethod.ts`

@@ -108,27 +108,35 @@ export function mixtureEnthalpy(
 }
 
 /**
- * Calculate vapor pressure using Clausius-Clapeyron equation
+ * Calculate vapor pressure using Lee-Kesler correlation
+ * ln(Pr) = f0(Tr) + omega * f1(Tr)
+ * Uses Tc, Pc, omega from database. Error ~1-3% vs 10-15% for Trouton's rule.
  * Returns vapor pressure in Pascal (Pa)
  */
 export function vaporPressure(component: Component, T_K: number): number {
-  // Clausius-Clapeyron equation:
-  // ln(P2/P1) = (Hvap/R) * (1/T1 - 1/T2)
-  // At T = Tb, P = 1 atm = 101325 Pa
-  const R = 8.314; // J/mol/K
-  const T_ref = component.Tb;
-  const P_ref = 101325; // Pa (1 atm at boiling point)
+  const Tr = T_K / component.Tc;
 
-  // Trouton's rule: Hvap ≈ 85 J/(mol·K) * Tb
-  // More accurate than 40.7 * MW
-  const Hvap = 85 * T_ref; // J/mol
+  // Lee-Kesler correlation
+  const f0 = 5.92714 - 6.09648 / Tr - 1.28862 * Math.log(Tr) + 0.169347 * Tr ** 6;
+  const f1 = 15.2518 - 15.6875 / Tr - 13.4721 * Math.log(Tr) + 0.43577 * Tr ** 6;
 
-  // Calculate vapor pressure in Pa
-  const P_vap_Pa = P_ref * Math.exp((Hvap / R) * (1 / T_ref - 1 / T_K));
+  const lnPr = f0 + component.omega * f1;
+  const Pc_Pa = component.Pc * 1e5; // bar -> Pa
+
+  // Anchor correction: at Tb, Pvap should equal 101325 Pa
+  // Compute LK prediction at Tb and apply multiplicative correction
+  const Tr_b = component.Tb / component.Tc;
+  const f0_b = 5.92714 - 6.09648 / Tr_b - 1.28862 * Math.log(Tr_b) + 0.169347 * Tr_b ** 6;
+  const f1_b = 15.2518 - 15.6875 / Tr_b - 13.4721 * Math.log(Tr_b) + 0.43577 * Tr_b ** 6;
+  const lnPr_b = f0_b + component.omega * f1_b;
+  const P_at_Tb = Pc_Pa * Math.exp(lnPr_b);
+  const correction = 101325 / P_at_Tb; // anchors Pvap(Tb) = 1 atm exactly
+
+  const P_vap_Pa = Pc_Pa * Math.exp(lnPr) * correction;
 
   // Clamp to reasonable values
-  if (P_vap_Pa < 1) return 1; // Minimum 1 Pa
-  if (P_vap_Pa > 1e9) return 1e9; // Maximum 10000 bar
+  if (P_vap_Pa < 1) return 1;
+  if (P_vap_Pa > 1e9) return 1e9;
 
   return P_vap_Pa;
 }
@@ -252,9 +260,29 @@ export function density(
     // Since 1 Pa = 1 J/m³, units work out to g/m³
     return (P * MW_avg) / (R * T * 1000); // kg/m³
   } else {
-    // Liquid: use typical liquid densities
-    // This is very simplified - should use correlations like Rackett
-    return 1000; // kg/m³ (placeholder)
+    // Liquid: Rackett equation
+    // Vs = (R*Tc/Pc) * Zra^(1 + (1-Tr)^(2/7))
+    // Zra = 0.29056 - 0.08775*omega
+    const R_gas = 8.314;
+    let rho_mix = 0;
+    let totalFrac = 0;
+    for (const [comp, frac] of Object.entries(composition)) {
+      const component = COMPONENT_DATABASE[comp];
+      if (!component || frac <= 0) continue;
+      const Tr = Math.min(T / component.Tc, 0.999); // clamp below Tc
+      // Use modified Rackett with component-specific Zra where available
+      // Water (Zra=0.2338) is anomalous due to hydrogen bonding
+      const Zra = component.name === 'Water' ? 0.2338 : 0.29056 - 0.08775 * component.omega;
+      const Pc_Pa = component.Pc * 1e5;
+      const Vs = (R_gas * component.Tc / Pc_Pa) * Math.pow(Math.max(Zra, 0.1), 1 + Math.pow(1 - Tr, 2 / 7)); // m3/mol
+      const rho_i = component.MW / (Vs * 1e6); // kg/m3 (MW g/mol, Vs m3/mol -> g/m3 -> /1000 = kg/m3... let me redo)
+      // Vs in m3/mol, MW in g/mol -> density = MW/1000 / Vs = kg/m3
+      const rho_comp = (component.MW / 1000) / Vs; // kg/m3
+      rho_mix += frac / rho_comp; // inverse mixing (volume additivity)
+      totalFrac += frac;
+    }
+    if (rho_mix <= 0 || totalFrac <= 0) return 800; // fallback
+    return totalFrac / rho_mix; // harmonic mean density
   }
 }
 
@@ -319,5 +347,58 @@ export function calculateVaporFraction(
   if (K_values.every((k) => k < 1)) return 0.0; // All liquid
 
   return rachfordRiceFlash(composition, K);
+}
+
+/**
+ * Calculate ideal gas entropy (J/mol/K) relative to reference state (298.15 K, 1 atm)
+ * S = S_ref + integral(Cp/T dT, T0 to T) - R*ln(P/P_ref)
+ */
+export function idealGasEntropy(component: Component, T: number, P_Pa: number): number {
+  const T0 = 298.15;
+  const P_ref = 101325; // 1 atm
+  const R = 8.314;
+  const [a, b, c, d, e] = component.Cp_coef;
+
+  const integral = a * Math.log(T / T0)
+    + b * (T - T0)
+    + (c / 2) * (T * T - T0 * T0)
+    + (d / 3) * (T ** 3 - T0 ** 3)
+    + (e / 4) * (T ** 4 - T0 ** 4);
+
+  return integral - R * Math.log(P_Pa / P_ref);
+}
+
+/**
+ * Calculate heat of reaction at temperature T (kJ/mol of reaction extent)
+ * deltaH_rxn(T) = sum(nu_i * Hf_i) + integral(sum(nu_i * Cp_i) dT, 298.15 to T)
+ */
+export function heatOfReaction(
+  stoichiometry: Record<string, number>,
+  T: number,
+): number {
+  const T0 = 298.15;
+  let deltaHf = 0;
+  let deltaCp_a = 0, deltaCp_b = 0, deltaCp_c = 0, deltaCp_d = 0, deltaCp_e = 0;
+
+  for (const [compName, nu] of Object.entries(stoichiometry)) {
+    const comp = COMPONENT_DATABASE[compName];
+    if (!comp) continue;
+    deltaHf += nu * comp.Hf; // kJ/mol
+    deltaCp_a += nu * comp.Cp_coef[0];
+    deltaCp_b += nu * comp.Cp_coef[1];
+    deltaCp_c += nu * comp.Cp_coef[2];
+    deltaCp_d += nu * comp.Cp_coef[3];
+    deltaCp_e += nu * comp.Cp_coef[4];
+  }
+
+  // Integral of deltaCp from T0 to T (J/mol)
+  const deltaCp_integral =
+    deltaCp_a * (T - T0)
+    + (deltaCp_b / 2) * (T * T - T0 * T0)
+    + (deltaCp_c / 3) * (T ** 3 - T0 ** 3)
+    + (deltaCp_d / 4) * (T ** 4 - T0 ** 4)
+    + (deltaCp_e / 5) * (T ** 5 - T0 ** 5);
+
+  return deltaHf + deltaCp_integral / 1000; // kJ/mol
 }
 

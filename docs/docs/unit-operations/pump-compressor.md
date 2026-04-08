@@ -1,141 +1,61 @@
 ---
-sidebar_position: 4
+sidebar_position: 5
 ---
 
 # Pump / Compressor
 
-Pumps increase liquid pressure. Compressors increase gas pressure.
+Increase pressure of liquids (pump) or gases (compressor).
 
 ## Pump
 
-### Parameters
-
-| Parameter | Type | Unit | Description |
-|-----------|------|------|-------------|
-| dP | Quantity | bar, Pa, psi | Pressure rise |
-
-### Calculation Method
-
-For incompressible liquids, work is calculated as:
+For incompressible liquids, power is calculated from volumetric flow and pressure rise:
 
 ```
-W = (V_dot * dP) / eta
+W = (V̇ × ΔP) / η
 ```
 
-Where:
-- `V_dot` is volumetric flow rate
-- `dP` is pressure rise
-- `eta` is pump efficiency (default 0.75)
+Liquid density comes from the **Rackett equation** via the property package (replacing the old 1000 kg/m3 placeholder).
 
-Temperature rise is typically negligible for liquids.
-
-### Implementation
-
-```typescript
-export function solvePump(
-  inlet: StreamData,
-  params: PumpParams
-): { outlet: StreamData; power: number } {
-  const dP = params.dP;  // Pa
-  const eta = 0.75;
-
-  // Outlet pressure
-  const P_out = inlet.P + dP;
-
-  // Estimate volumetric flow (assume liquid density ~1000 kg/m3)
-  const avgMW = getMixtureMW(inlet.composition);
-  const rho = 1000;  // kg/m3
-  const massFlow = inlet.flow * avgMW / 1000;  // kg/s
-  const volFlow = massFlow / rho;  // m3/s
-
-  // Power calculation
-  const power = (volFlow * dP) / eta;  // W
-
-  return {
-    outlet: {
-      T: inlet.T,  // Temperature unchanged
-      P: P_out,
-      flow: inlet.flow,
-      composition: inlet.composition,
-      phase: 'L',
-    },
-    power: power,
-  };
-}
-```
-
----
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| dP | Quantity | 5 bar | Pressure rise |
+| efficiency | Number | 0.75 | Pump efficiency |
 
 ## Compressor
 
-### Parameters
+Uses **isentropic compression with efficiency correction**:
 
-| Parameter | Type | Unit | Description |
-|-----------|------|------|-------------|
-| outletP | Quantity | bar, Pa, psi | Outlet pressure |
-| ratio | Number | - | Compression ratio (optional) |
+1. Compute inlet entropy: `S_in = pkg.mixtureEntropy(comp, T_in, P_in)`
+2. Find isentropic outlet T via Newton iteration: solve `S(T_s, P_out) = S_in`
+3. Compute isentropic work: `ΔH_s = H(T_s, P_out) - H(T_in, P_in)`
+4. Actual work: `ΔH_actual = ΔH_s / η`
+5. Find actual outlet T from `H(T_out, P_out) = H_in + ΔH_actual`
 
-### Calculation Method
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| outletP | Quantity | 2× inlet | Outlet pressure |
+| ratio | Number | 2 | Pressure ratio (if outletP not set) |
+| efficiency | Number | 0.75 | Isentropic efficiency |
 
-For ideal gas compression (isentropic):
+### Block Results
 
-```
-W_s = (gamma / (gamma-1)) * n * R * T_in * [(P_out/P_in)^((gamma-1)/gamma) - 1]
-```
+| Result | Unit | Description |
+|--------|------|-------------|
+| power | kJ/h | Actual shaft power |
+| outletP | bar | Outlet pressure |
+| T_out | K | Actual outlet temperature |
+| isentropicT | K | Isentropic outlet temperature |
+| efficiency | - | Isentropic efficiency used |
 
-Actual work with efficiency:
+### Accuracy
 
-```
-W_actual = W_s / eta_s
-```
+For nitrogen compression (1→3 bar):
+- Isentropic T_out: 410.2 K (textbook: 410.6 K, 0.1% error)
+- Isentropic work: 3.22 kJ/mol (textbook: 3.22 kJ/mol)
 
-Outlet temperature:
+## Ports
 
-```
-T_out = T_in * (P_out/P_in)^((gamma-1)/gamma)
-```
-
-### Implementation
-
-```typescript
-export function solveCompressor(
-  inlet: StreamData,
-  params: CompressorParams
-): { outlet: StreamData; power: number } {
-  const P_out = params.outletP;  // Pa
-  const eta = 0.72;  // Isentropic efficiency
-  const gamma = 1.4;  // Cp/Cv ratio
-
-  const ratio = P_out / inlet.P;
-
-  // Isentropic outlet temperature
-  const T_out_s = inlet.T * Math.pow(ratio, (gamma - 1) / gamma);
-
-  // Actual outlet temperature
-  const T_out = inlet.T + (T_out_s - inlet.T) / eta;
-
-  // Work calculation
-  const R = 8.314;  // J/(mol*K)
-  const W_s = (gamma / (gamma - 1)) * inlet.flow * R * inlet.T *
-    (Math.pow(ratio, (gamma - 1) / gamma) - 1);
-  const power = W_s / eta;
-
-  return {
-    outlet: {
-      T: T_out,
-      P: P_out,
-      flow: inlet.flow,
-      composition: inlet.composition,
-      phase: 'V',
-    },
-    power: power,
-  };
-}
-```
-
-### Ports
-
-| Port | Direction | Description |
-|------|-----------|-------------|
-| in | Input | Inlet stream |
-| out | Output | Pressurized outlet stream |
+| Port | Direction | Phase |
+|------|-----------|-------|
+| in | Input | L (pump) or V (compressor) |
+| out | Output | L (pump) or V (compressor) |

@@ -15,8 +15,8 @@ Thank you for your interest in contributing to Jasper!
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/your-feature`)
 3. Make your changes
-4. Add tests if applicable
-5. Run existing tests to ensure nothing is broken
+4. Run `npx tsc --noEmit` to verify types
+5. Run `npx tsx src/sim/thermo/__tests__/quickmode-parity.test.ts` to verify correctness
 6. Commit with clear messages
 7. Push to your fork
 8. Open a Pull Request
@@ -31,26 +31,34 @@ Thank you for your interest in contributing to Jasper!
 ### Areas We Need Help
 
 **Thermodynamics**
-- Peng-Robinson equation of state implementation
-- NRTL activity coefficient model
-- UNIQUAC model
-- Steam tables / IAPWS-IF97
+- Wilson/UNIQUAC activity coefficient models
+- UNIFAC group contribution method
+- Henry's Law for dissolved gases
+- Steam tables (IAPWS-IF97)
 
-**Unit Operations**
-- Rigorous distillation column model
-- Absorption column model
-- Heat exchanger network synthesis
-- Reactor kinetics models
+**Separation Operations**
+- Rigorous stage-by-stage distillation (MESH equations)
+- Packed column HETP correlations
+- Reactive distillation
 
 **Property Database**
-- Adding more chemicals with accurate property data
-- Binary interaction parameters for activity coefficient models
-- Critical properties for equation of state calculations
+- Expand NRTL BIP database beyond ~20 pairs
+- Add more chemicals beyond 70 components
+- Validate against DECHEMA VLE data
 
 **Documentation**
-- API documentation
-- Tutorial examples
+- Tutorial examples for common systems
 - Validation against published data
+- Video walkthroughs
+
+### Completed (no longer needed)
+
+- ~~Peng-Robinson EOS~~ — `pengRobinson.ts`
+- ~~NRTL activity coefficients~~ — `nrtl.ts` + `bipDatabase.ts`
+- ~~Shortcut distillation~~ — Fenske-Underwood-Gilliland in `blockSolver.ts`
+- ~~Reactor heat of reaction~~ — `heatOfReaction()` in `properties.ts`
+- ~~Recycle convergence~~ — Wegstein acceleration in `blockSolver.ts`
+- ~~Kremser absorber/stripper~~ — in `blockSolver.ts`
 
 ## Questions?
 

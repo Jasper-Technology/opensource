@@ -36,7 +36,14 @@ export const UnitTypeSchema = z.enum([
   'Absorber',
   'Stripper',
   'DistillationColumn',
-  'Reactor',
+  'Reactor',   // legacy — kept for backward compat
+  'RCSTR',     // Continuous Stirred Tank Reactor (Aspen RCSTR)
+  'RPfr',      // Plug Flow Reactor (Aspen RPlug)
+  'RBatch',    // Batch Reactor (Aspen RBatch)
+  'RStoic',    // Stoichiometric Reactor (Aspen RStoic)
+  'RYield',    // Yield Reactor (Aspen RYield)
+  'REquil',    // Equilibrium Reactor (Aspen REquil)
+  'RGibbs',    // Gibbs Free Energy Reactor (Aspen RGibbs)
   'Separator',
   'Sink',
   'TextBox',
@@ -75,6 +82,25 @@ export const ComponentSchema = z.object({
   role: z.enum(['solute', 'solvent', 'inert']).optional(),
 });
 export type Component = z.infer<typeof ComponentSchema>;
+
+// Reactions
+export const ArrheniusKineticsSchema = z.object({
+  A: z.number(),      // pre-exponential factor
+  Ea: z.number(),     // activation energy (J/mol)
+  T_ref: z.number().optional(),
+});
+export type ArrheniusKinetics = z.infer<typeof ArrheniusKineticsSchema>;
+
+export const ReactionSchema = z.object({
+  id: z.string(),
+  stoichiometry: z.record(z.string(), z.number()), // component formula -> signed coefficient
+  type: z.enum(['rate', 'equilibrium']).default('rate'),
+  rate_constant: z.number().optional(),
+  equilibrium_constant: z.number().optional(),
+  arrhenius: ArrheniusKineticsSchema.optional(),
+  concentration_orders: z.record(z.string(), z.number()).optional(),
+});
+export type Reaction = z.infer<typeof ReactionSchema>;
 
 // Graph
 export const LayoutInfoSchema = z.object({
@@ -152,6 +178,12 @@ export const FlowsheetGraphSchema = z.object({
 export type FlowsheetGraph = z.infer<typeof FlowsheetGraphSchema>;
 
 // Specs
+export const VaryHandleSchema = z.object({
+  unitId: z.string(),
+  param: z.string(),  // dotted path, e.g. "reflux_ratio" or "outlet.temperature"
+});
+export type VaryHandle = z.infer<typeof VaryHandleSchema>;
+
 export const SpecSchema = z.discriminatedUnion('type', [
   z.object({
     id: z.string(),
@@ -159,6 +191,7 @@ export const SpecSchema = z.discriminatedUnion('type', [
     streamId: z.string(),
     component: z.string(),
     target: z.number(),
+    vary: VaryHandleSchema.optional(),
   }),
   z.object({
     id: z.string(),
@@ -167,6 +200,7 @@ export const SpecSchema = z.discriminatedUnion('type', [
     feedStreamId: z.string(),
     productStreamId: z.string(),
     target: z.number(),
+    vary: VaryHandleSchema.optional(),
   }),
   z.object({
     id: z.string(),
@@ -174,6 +208,7 @@ export const SpecSchema = z.discriminatedUnion('type', [
     component: z.string(),
     ventStreamId: z.string(),
     targetRemoval: z.number(),
+    vary: VaryHandleSchema.optional(),
   }),
 ]);
 export type Spec = z.infer<typeof SpecSchema>;
@@ -261,13 +296,23 @@ export const JasperProjectSchema = z.object({
   updatedAt: z.string(),
   thermodynamics: ThermoConfigSchema,
   components: z.array(ComponentSchema),
-  flowsheet: FlowsheetGraphSchema,
+  flowsheet: FlowsheetGraphSchema, // Main flowsheet (for backward compatibility)
+  flowsheets: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    graph: FlowsheetGraphSchema,
+  })).optional(), // Multiple flowsheet tabs
+  activeFlowsheetId: z.string().optional(), // Currently active tab
+  reactions: z.array(ReactionSchema).optional(),
   specs: SpecSetSchema,
   constraints: ConstraintSetSchema,
   objective: ObjectiveSchema,
   economics: EconomicConfigSchema.optional(),
   status: ProjectStatusSchema,
   latestVersionId: z.string().optional(),
+  cloudSynced: z.boolean().optional(), // true once pushed to Supabase via Share
+  collaboratorRole: z.enum(['owner', 'editor', 'viewer']).optional(), // role of current user
+  _v: z.number().int().optional(), // monotonic write counter, incremented on every Supabase save
 });
 export type JasperProject = z.infer<typeof JasperProjectSchema>;
 
@@ -290,6 +335,8 @@ export const SpecResultSchema = z.object({
   achieved: z.number(),
   target: z.number(),
   ok: z.boolean(),
+  iterations: z.number().int().optional(),  // number of solver iterations used
+  handle: z.string().optional(),            // human-readable handle description
 });
 export type SpecResult = z.infer<typeof SpecResultSchema>;
 

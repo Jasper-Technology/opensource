@@ -15,6 +15,7 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'simulation/overview',
+        'simulation/solver',
         'simulation/rigorous-mode',
         'simulation/troubleshooting',
       ],
@@ -63,7 +64,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Contributing',
       collapsed: true,
-      items: ['contributing/development'],
+      items: ['contributing/development-setup'],
     },
   ],
 };
