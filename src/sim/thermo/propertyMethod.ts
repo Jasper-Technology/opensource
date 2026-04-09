@@ -89,7 +89,7 @@ export class IdealPropertyPackage implements PropertyPackage {
   }
 
   mixtureEntropy(composition: Record<string, number>, T: number, P_Pa: number): number {
-    // Ideal gas entropy (simplified)
+    if (!Number.isFinite(T) || T <= 0 || !Number.isFinite(P_Pa) || P_Pa <= 0) return 0;
     const components = Object.keys(composition);
     const T0 = 298.15;
     const P0 = 101325;
@@ -271,6 +271,7 @@ export class NRTLPropertyPackage implements PropertyPackage {
   }
 
   mixtureEntropy(composition: Record<string, number>, T: number, P_Pa: number): number {
+    if (!Number.isFinite(T) || T <= 0 || !Number.isFinite(P_Pa) || P_Pa <= 0) return 0;
     const components = Object.keys(composition);
     const T0 = 298.15;
     const P0 = 101325;
@@ -300,6 +301,7 @@ function solveRR(z: number[], K: number[]): number {
       df -= z[i] * (K[i] - 1) ** 2 / (d * d);
     }
     if (Math.abs(f) < 1e-8) break;
+    if (Math.abs(df) < 1e-30) break;
     V = Math.max(0, Math.min(1, V - f / df));
   }
   return V;

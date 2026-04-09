@@ -114,6 +114,9 @@ export function mixtureEnthalpy(
  * Returns vapor pressure in Pascal (Pa)
  */
 export function vaporPressure(component: Component, T_K: number): number {
+  // Guard: T must be positive and finite
+  if (!Number.isFinite(T_K) || T_K <= 0) return 1; // minimum vapor pressure
+  if (component.Tc <= 0 || component.Pc <= 0) return 1;
   const Tr = T_K / component.Tc;
 
   // Lee-Kesler correlation
@@ -130,12 +133,12 @@ export function vaporPressure(component: Component, T_K: number): number {
   const f1_b = 15.2518 - 15.6875 / Tr_b - 13.4721 * Math.log(Tr_b) + 0.43577 * Tr_b ** 6;
   const lnPr_b = f0_b + component.omega * f1_b;
   const P_at_Tb = Pc_Pa * Math.exp(lnPr_b);
-  const correction = 101325 / P_at_Tb; // anchors Pvap(Tb) = 1 atm exactly
+  const correction = P_at_Tb > 0 && Number.isFinite(P_at_Tb) ? 101325 / P_at_Tb : 1; // anchors Pvap(Tb) = 1 atm exactly
 
   const P_vap_Pa = Pc_Pa * Math.exp(lnPr) * correction;
 
-  // Clamp to reasonable values
-  if (P_vap_Pa < 1) return 1;
+  // Clamp to reasonable values (also catches NaN/Infinity)
+  if (!Number.isFinite(P_vap_Pa) || P_vap_Pa < 1) return 1;
   if (P_vap_Pa > 1e9) return 1e9;
 
   return P_vap_Pa;
@@ -151,7 +154,7 @@ export function calculateKValues(
   T: number,
   P: number // Pressure in Pascal
 ): Record<string, number> {
-  const K_values: Record<string, number> = {};
+  const K_values: Record<string, number> = Object.create(null);
 
   for (const compName of components) {
     const comp = COMPONENT_DATABASE[compName];
@@ -195,7 +198,8 @@ export function rachfordRiceFlash(
       df -= z_i * (K_i - 1)**2 / (denom**2);
     }
     
-    // Newton step
+    // Newton step — guard against singular Jacobian
+    if (Math.abs(df) < 1e-30) break;
     const V_new = V - f / df;
     
     // Bounds
@@ -220,8 +224,8 @@ export function flashComposition(
   K: Record<string, number>,
   V: number
 ): { vapor: Record<string, number>; liquid: Record<string, number> } {
-  const vapor: Record<string, number> = {};
-  const liquid: Record<string, number> = {};
+  const vapor: Record<string, number> = Object.create(null);
+  const liquid: Record<string, number> = Object.create(null);
   
   for (const [comp, z_i] of Object.entries(z)) {
     const K_i = K[comp];
@@ -354,6 +358,8 @@ export function calculateVaporFraction(
  * S = S_ref + integral(Cp/T dT, T0 to T) - R*ln(P/P_ref)
  */
 export function idealGasEntropy(component: Component, T: number, P_Pa: number): number {
+  if (!Number.isFinite(T) || T <= 0) return 0;
+  if (!Number.isFinite(P_Pa) || P_Pa <= 0) return 0;
   const T0 = 298.15;
   const P_ref = 101325; // 1 atm
   const R = 8.314;

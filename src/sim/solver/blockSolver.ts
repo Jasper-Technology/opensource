@@ -37,12 +37,14 @@ function resolveCompositionForThermo(
   composition: Record<string, number>,
   project: JasperProject
 ): Record<string, number> {
-  if (!composition || Object.keys(composition).length === 0) return {};
+  if (!composition || Object.keys(composition).length === 0) return Object.create(null);
   const components = project.components || [];
-  const resolved: Record<string, number> = {};
+  const resolved: Record<string, number> = Object.create(null);
   for (const [key, frac] of Object.entries(composition)) {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
     const comp = components.find((c) => c.id === key);
     const thermoKey = comp?.formula || comp?.name || key;
+    if (thermoKey === '__proto__' || thermoKey === 'constructor' || thermoKey === 'prototype') continue;
     resolved[thermoKey] = (resolved[thermoKey] ?? 0) + frac;
   }
   return resolved;
@@ -63,17 +65,25 @@ export interface StreamState {
 function normalizeComposition(comp: Record<string, number>): Record<string, number> {
   const sum = Object.values(comp).reduce((a, b) => a + b, 0);
   if (sum <= 0) return comp;
-  const out: Record<string, number> = {};
+  const out: Record<string, number> = Object.create(null);
   for (const [k, v] of Object.entries(comp)) out[k] = v / sum;
   return out;
 }
 
-/** Extract numeric value from ParamValue */
-function getParam(param: any): number | undefined {
-  if (!param) return undefined;
-  if (param.kind === 'quantity') return param.q?.value;
-  if (param.kind === 'number') return param.x;
-  if (param.kind === 'int') return param.n;
+/** Extract numeric value from ParamValue — validates type and finiteness */
+function getParam(param: unknown): number | undefined {
+  if (!param || typeof param !== 'object') return undefined;
+  const p = param as Record<string, unknown>;
+  if (p.kind === 'quantity') {
+    const val = (p.q as Record<string, unknown> | undefined)?.value;
+    return typeof val === 'number' && Number.isFinite(val) ? val : undefined;
+  }
+  if (p.kind === 'number') {
+    return typeof p.x === 'number' && Number.isFinite(p.x) ? p.x : undefined;
+  }
+  if (p.kind === 'int') {
+    return typeof p.n === 'number' && Number.isFinite(p.n) ? p.n : undefined;
+  }
   return undefined;
 }
 
@@ -232,7 +242,7 @@ export function solveFlowsheet(project: JasperProject): SolverResult {
             accelerated[i] = (1 - qClamped) * curr[i] + qClamped * prev[i];
           }
           // Apply accelerated values back to tear stream
-          s.T = Math.max(100, accelerated[0]);
+          s.T = Math.max(100, Math.min(accelerated[0], 3000));
           s.P = Math.max(0.01, accelerated[1]);
           s.flow = Math.max(0, accelerated[2]);
           const compKeys = Object.keys(s.composition);
@@ -325,6 +335,7 @@ function initializeFeedStreams(
  * Returns { order, tearStreams } where tearStreams are back-edge stream IDs.
  */
 function topologicalSortWithTear(flowsheet: FlowsheetGraph): { order: string[]; tearStreams: string[] } {
+  const MAX_NODES = 500;
   const order: string[] = [];
   const tearStreams: string[] = [];
   const visited = new Set<string>();
@@ -334,6 +345,10 @@ function topologicalSortWithTear(flowsheet: FlowsheetGraph): { order: string[]; 
   for (const block of flowsheet.nodes) {
     if (block.type === 'TextBox' || block.type === 'Sink') continue;
     graph.set(block.id, []);
+  }
+
+  if (graph.size > MAX_NODES) {
+    throw new Error(`Flowsheet too large: ${graph.size} nodes (max ${MAX_NODES})`);
   }
 
   // Map from (from, to) to edge IDs for tear detection
@@ -347,26 +362,36 @@ function topologicalSortWithTear(flowsheet: FlowsheetGraph): { order: string[]; 
     }
   }
 
-  function visit(blockId: string) {
-    if (visited.has(blockId)) return;
-    if (visiting.has(blockId)) {
-      // Cycle detected - this edge is a tear stream
-      return;
-    }
+  // Iterative DFS to avoid stack overflow on large flowsheets
+  function visit(startId: string) {
+    if (visited.has(startId)) return;
+    const stack: { id: string; idx: number }[] = [{ id: startId, idx: 0 }];
+    visiting.add(startId);
 
-    visiting.add(blockId);
-    const neighbors = graph.get(blockId) || [];
-    for (const neighbor of neighbors) {
-      if (visiting.has(neighbor) && !visited.has(neighbor)) {
-        // Back edge found - mark as tear stream
-        const edgeId = edgeMap.get(`${blockId}->${neighbor}`);
-        if (edgeId) tearStreams.push(edgeId);
+    while (stack.length > 0) {
+      const frame = stack[stack.length - 1];
+      const neighbors = graph.get(frame.id) || [];
+
+      if (frame.idx < neighbors.length) {
+        const neighbor = neighbors[frame.idx];
+        frame.idx++;
+
+        if (visiting.has(neighbor) && !visited.has(neighbor)) {
+          // Back edge — tear stream
+          const edgeId = edgeMap.get(`${frame.id}->${neighbor}`);
+          if (edgeId) tearStreams.push(edgeId);
+        } else if (!visited.has(neighbor)) {
+          visiting.add(neighbor);
+          stack.push({ id: neighbor, idx: 0 });
+        }
+      } else {
+        // All neighbors processed — post-order
+        stack.pop();
+        visiting.delete(frame.id);
+        visited.add(frame.id);
+        order.push(frame.id);
       }
-      visit(neighbor);
     }
-    visiting.delete(blockId);
-    visited.add(blockId);
-    order.push(blockId);
   }
 
   for (const blockId of graph.keys()) {
@@ -530,7 +555,7 @@ function solveMixer(
   const P_out_bar = Math.min(...inlets.map(s => s.P));
   const P_out_Pa = P_out_bar * BAR_TO_PA;
 
-  const composition: Record<string, number> = {};
+  const composition: Record<string, number> = Object.create(null);
   for (const comp of new Set(inlets.flatMap(s => Object.keys(s.composition)))) {
     composition[comp] = inlets.reduce((sum, s) => sum + (s.composition[comp] || 0) * s.flow, 0) / totalFlow;
   }
@@ -642,7 +667,7 @@ function solvePump(
   if (MW === 0) MW = 30;
 
   const volumetricFlow = (inlet.flow * MW) / (rho * 3600);
-  const efficiency = getParam(block.params.efficiency) ?? 0.75;
+  const efficiency = Math.max(0.01, Math.min(getParam(block.params.efficiency) ?? 0.75, 1.0));
   const actualPower = (volumetricFlow * dP_Pa) / 1000 / efficiency;
 
   streams.set(outletEdge.id, {
@@ -680,7 +705,7 @@ function solveCompressor(
 
   const P_in_Pa = inlet.P * BAR_TO_PA;
   const P_out_Pa = outletP_bar * BAR_TO_PA;
-  const efficiency = getParam(block.params.efficiency) ?? 0.75;
+  const efficiency = Math.max(0.01, Math.min(getParam(block.params.efficiency) ?? 0.75, 1.0));
 
   // Isentropic compression: find T_out_s where S(T_out_s, P_out) = S(T_in, P_in)
   const S_in = pkg.mixtureEntropy(inlet.composition, inlet.T, P_in_Pa, 'V');
@@ -1177,7 +1202,7 @@ function solveAbsorber(
   }
 
   // Kremser equation for each solute component
-  const N_stages = getParam(block.params.stages) ?? 10;
+  const N_stages = Math.max(1, Math.min(Math.round(getParam(block.params.stages) ?? 10), 500));
   const P_Pa = gasIn.P * BAR_TO_PA;
   const T_avg = (gasIn.T + liquidIn.T) / 2;
 
@@ -1288,7 +1313,7 @@ function solveStripper(
     return;
   }
 
-  const N_stages = getParam(block.params.stages) ?? 8;
+  const N_stages = Math.max(1, Math.min(Math.round(getParam(block.params.stages) ?? 8), 500));
   const P_bar = block.params.P ? paramToBar(block.params.P, feed.P) : feed.P;
   const P_Pa = P_bar * BAR_TO_PA;
   const T_strip = feed.T + 80; // Reboiler temperature

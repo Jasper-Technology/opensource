@@ -13,6 +13,7 @@ const R = 8.314; // J/(mol·K)
  * PR alpha function: alpha(T) = [1 + kappa*(1 - sqrt(Tr))]^2
  */
 export function prAlpha(T: number, Tc: number, omega: number): number {
+  if (!Number.isFinite(T) || T <= 0 || Tc <= 0) return 1;
   const Tr = T / Tc;
   const kappa = 0.37464 + 1.54226 * omega - 0.26992 * omega * omega;
   const sqrtAlpha = 1 + kappa * (1 - Math.sqrt(Tr));
@@ -111,7 +112,9 @@ export function solveCubic(A: number, B: number): number[] {
     roots.push(m * Math.cos((theta + 4 * Math.PI) / 3) + shift);
   }
 
-  return roots.filter(z => z > 0).sort((a, b) => a - b);
+  const positiveRoots = roots.filter(z => z > 0 && Number.isFinite(z)).sort((a, b) => a - b);
+  // Guarantee at least one root — fallback to ideal gas Z=1 if cubic has no positive real roots
+  return positiveRoots.length > 0 ? positiveRoots : [1.0];
 }
 
 /**
@@ -235,6 +238,12 @@ export function prFlash(
   P_Pa: number,
   componentNames: string[],
 ): { V: number; K: Record<string, number>; x: Record<string, number>; y: Record<string, number>; converged: boolean } {
+  // Validate inputs
+  if (!Number.isFinite(T) || T <= 0 || !Number.isFinite(P_Pa) || P_Pa <= 0) {
+    const fallback: Record<string, number> = Object.create(null);
+    for (const c of componentNames) { fallback[c] = z[c] ?? 0; }
+    return { V: 0, K: Object.create(null), x: fallback, y: fallback, converged: false };
+  }
   const n = componentNames.length;
   const zArr = componentNames.map(c => z[c] ?? 0);
 
@@ -336,6 +345,7 @@ function solveRachfordRice(z: number[], K: number[]): number {
       df -= z[i] * (K[i] - 1) ** 2 / (denom * denom);
     }
     if (Math.abs(f) < 1e-8) break;
+    if (Math.abs(df) < 1e-30) break;
     const Vnew = V - f / df;
     V = Math.max(0, Math.min(1, Vnew));
   }
@@ -383,6 +393,7 @@ export function prMixtureEntropy(
   P_Pa: number,
   phase: 'V' | 'L',
 ): number {
+  if (!Number.isFinite(T) || T <= 0 || !Number.isFinite(P_Pa) || P_Pa <= 0) return 0;
   const compArr = components.map(c => composition[c] ?? 0);
   const T0 = 298.15;
   const P0 = 101325; // 1 atm

@@ -27,6 +27,7 @@ export function nrtlGamma(
   const n = components.length;
   if (n === 0) return [];
   if (n === 1) return [1.0];
+  if (!Number.isFinite(T) || T <= 0) return new Array(n).fill(1.0);
 
   // Build tau and G matrices
   const tau: number[][] = Array.from({ length: n }, () => new Array(n).fill(0));
@@ -65,6 +66,8 @@ export function nrtlGamma(
       den1 += G[j][i] * x[j];
     }
 
+    // Guard against zero denominator (empty composition edge case)
+    if (Math.abs(den1) < 1e-300) { gamma.push(1.0); continue; }
     let lnGamma = num1 / den1;
 
     // Second sum
@@ -75,6 +78,7 @@ export function nrtlGamma(
         denJ += G[k][j] * x[k];
         numJ += x[k] * tau[k][j] * G[k][j];
       }
+      if (Math.abs(denJ) < 1e-300) continue;
       lnGamma += (x[j] * G[i][j] / denJ) * (tau[i][j] - numJ / denJ);
     }
 

@@ -64,9 +64,9 @@ export function getBIP(comp1: string, comp2: string): BIPEntry | null {
   const key1 = `${comp1}/${comp2}`;
   const key2 = `${comp2}/${comp1}`;
 
-  if (BIP_TABLE[key1]) return BIP_TABLE[key1];
+  if (Object.prototype.hasOwnProperty.call(BIP_TABLE, key1)) return BIP_TABLE[key1];
 
-  if (BIP_TABLE[key2]) {
+  if (Object.prototype.hasOwnProperty.call(BIP_TABLE, key2)) {
     // Swap 12 <-> 21
     const e = BIP_TABLE[key2];
     return { a12: e.a21, a21: e.a12, b12: e.b21, b21: e.b12, alpha12: e.alpha12 };
