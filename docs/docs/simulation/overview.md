@@ -13,7 +13,7 @@ The default browser-based simulation engine. Runs entirely in the client with no
 | Aspect | Detail |
 |--------|--------|
 | Architecture | Sequential modular, client-side |
-| Thermodynamics | Ideal, Peng-Robinson EOS, NRTL activity coefficients |
+| Thermodynamics | Ideal, Peng-Robinson EOS, SRK, RK, NRTL activity coefficients |
 | Vapor pressure | Lee-Kesler correlation (1-3% error) |
 | Liquid density | Rackett equation |
 | Entropy | Ideal gas + PR departure functions |
