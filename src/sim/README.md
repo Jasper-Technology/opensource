@@ -2,14 +2,14 @@
 
 ## Overview
 
-Jasper uses **rigorous thermodynamic calculations** and **sequential modular solving** — similar to AspenPlus, DWSIM, and other professional simulators. The Quick mode engine runs entirely in-browser with three property methods (Ideal, PR, NRTL).
+Jasper uses **rigorous thermodynamic calculations** and **sequential modular solving** — similar to AspenPlus, DWSIM, and other professional simulators. The Quick mode engine runs entirely in-browser with five property methods (Ideal, PR, SRK, RK, NRTL).
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────┐
 │         Property Package Selection      │
-│  Ideal / Peng-Robinson / NRTL           │
+│  Ideal / PR / SRK / RK / NRTL           │
 └──────────────┬──────────────────────────┘
                │
                ▼
@@ -44,7 +44,7 @@ Jasper uses **rigorous thermodynamic calculations** and **sequential modular sol
 | `pengRobinson.ts` | PR EOS: cubic solver, fugacity coefficients, departure functions, phi-phi flash |
 | `nrtl.ts` | NRTL activity coefficient model |
 | `bipDatabase.ts` | ~20 BIP pairs (water-alcohol, amine-water, hydrocarbons, organics) |
-| `propertyMethod.ts` | PropertyPackage interface + Ideal/PR/NRTL factory |
+| `propertyMethod.ts` | PropertyPackage interface + Ideal/PR/SRK/RK/NRTL factory |
 | `componentDatabase.ts` | 70+ components with DIPPR/NIST validated data |
 
 ### Block Solvers (`solver/blockSolver.ts`)

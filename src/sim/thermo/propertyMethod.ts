@@ -26,6 +26,12 @@ import {
   prEnthalpyDeparture,
 } from './pengRobinson';
 import { nrtlGamma } from './nrtl';
+import {
+  cubicFlash,
+  cubicMixtureDensity,
+  cubicMixtureEnthalpy,
+  cubicMixtureEntropy,
+} from './cubicEOS';
 
 const R = 8.314;
 
@@ -131,31 +137,11 @@ export class PRPropertyPackage implements PropertyPackage {
   }
 
   liquidDensity(composition: Record<string, number>, T: number, P_Pa: number): number {
-    // Use PR EOS Z for liquid
-    const components = Object.keys(composition);
-    const compArr = components.map(c => composition[c]);
-    const { a_mix, b_mix } = prMixtureParams(T, components, compArr);
-    const A = a_mix * P_Pa / (R * R * T * T);
-    const B = b_mix * P_Pa / (R * T);
-    const roots = solveCubic(A, B);
-    const ZL = roots[0] ?? 0.05;
-    let MW = 0;
-    for (const [c, f] of Object.entries(composition)) MW += f * (COMPONENT_DATABASE[c]?.MW ?? 30);
-    // rho = P * MW / (Z * R * T), units: Pa * g/mol / (- * J/(mol*K) * K) = g/m3
-    return (P_Pa * MW) / (ZL * R * T * 1000); // kg/m3
+    return density(composition, T, P_Pa, 'L');
   }
 
   vaporDensity(composition: Record<string, number>, T: number, P_Pa: number): number {
-    const components = Object.keys(composition);
-    const compArr = components.map(c => composition[c]);
-    const { a_mix, b_mix } = prMixtureParams(T, components, compArr);
-    const A = a_mix * P_Pa / (R * R * T * T);
-    const B = b_mix * P_Pa / (R * T);
-    const roots = solveCubic(A, B);
-    const ZV = roots[roots.length - 1] ?? 1;
-    let MW = 0;
-    for (const [c, f] of Object.entries(composition)) MW += f * (COMPONENT_DATABASE[c]?.MW ?? 30);
-    return (P_Pa * MW) / (ZV * R * T * 1000);
+    return density(composition, T, P_Pa, 'V');
   }
 
   mixtureEnthalpy(composition: Record<string, number>, T: number, P_Pa: number, phase: 'V' | 'L' = 'V'): number {
@@ -166,6 +152,82 @@ export class PRPropertyPackage implements PropertyPackage {
   mixtureEntropy(composition: Record<string, number>, T: number, P_Pa: number, phase: 'V' | 'L' = 'V'): number {
     const components = Object.keys(composition);
     return prMixtureEntropy(components, composition, T, P_Pa, phase);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Soave-Redlich-Kwong Property Package
+// ---------------------------------------------------------------------------
+
+export class SRKPropertyPackage implements PropertyPackage {
+  name = 'SRK';
+
+  calculateKValues(components: string[], T: number, P_Pa: number): Record<string, number> {
+    const z: Record<string, number> = {};
+    const frac = 1 / components.length;
+    for (const c of components) z[c] = frac;
+    return cubicFlash('SRK', z, T, P_Pa, components).K;
+  }
+
+  flash(z: Record<string, number>, T: number, P_Pa: number, components: string[]): FlashResult {
+    const result = cubicFlash('SRK', z, T, P_Pa, components);
+    return { V: result.V, K: result.K, x: result.x, y: result.y };
+  }
+
+  liquidDensity(composition: Record<string, number>, T: number, P_Pa: number): number {
+    return cubicMixtureDensity('SRK', composition, T, P_Pa, 'L');
+  }
+
+  vaporDensity(composition: Record<string, number>, T: number, P_Pa: number): number {
+    return cubicMixtureDensity('SRK', composition, T, P_Pa, 'V');
+  }
+
+  mixtureEnthalpy(composition: Record<string, number>, T: number, P_Pa: number, phase: 'V' | 'L' = 'V'): number {
+    const components = Object.keys(composition);
+    return cubicMixtureEnthalpy('SRK', components, composition, T, P_Pa, phase);
+  }
+
+  mixtureEntropy(composition: Record<string, number>, T: number, P_Pa: number, phase: 'V' | 'L' = 'V'): number {
+    const components = Object.keys(composition);
+    return cubicMixtureEntropy('SRK', components, composition, T, P_Pa, phase);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Redlich-Kwong Property Package
+// ---------------------------------------------------------------------------
+
+export class RKPropertyPackage implements PropertyPackage {
+  name = 'RK';
+
+  calculateKValues(components: string[], T: number, P_Pa: number): Record<string, number> {
+    const z: Record<string, number> = {};
+    const frac = 1 / components.length;
+    for (const c of components) z[c] = frac;
+    return cubicFlash('RK', z, T, P_Pa, components).K;
+  }
+
+  flash(z: Record<string, number>, T: number, P_Pa: number, components: string[]): FlashResult {
+    const result = cubicFlash('RK', z, T, P_Pa, components);
+    return { V: result.V, K: result.K, x: result.x, y: result.y };
+  }
+
+  liquidDensity(composition: Record<string, number>, T: number, P_Pa: number): number {
+    return cubicMixtureDensity('RK', composition, T, P_Pa, 'L');
+  }
+
+  vaporDensity(composition: Record<string, number>, T: number, P_Pa: number): number {
+    return cubicMixtureDensity('RK', composition, T, P_Pa, 'V');
+  }
+
+  mixtureEnthalpy(composition: Record<string, number>, T: number, P_Pa: number, phase: 'V' | 'L' = 'V'): number {
+    const components = Object.keys(composition);
+    return cubicMixtureEnthalpy('RK', components, composition, T, P_Pa, phase);
+  }
+
+  mixtureEntropy(composition: Record<string, number>, T: number, P_Pa: number, phase: 'V' | 'L' = 'V'): number {
+    const components = Object.keys(composition);
+    return cubicMixtureEntropy('RK', components, composition, T, P_Pa, phase);
   }
 }
 
@@ -320,8 +382,15 @@ export function getPropertyPackage(method: string): PropertyPackage {
     case 'PR':
     case 'PENG-ROBINSON':
     case 'PENG_ROBINSON':
-    case 'SRK': // SRK users get PR (close enough for student use)
       return new PRPropertyPackage();
+    case 'SRK':
+    case 'SOAVE-REDLICH-KWONG':
+    case 'SOAVE_REDLICH_KWONG':
+      return new SRKPropertyPackage();
+    case 'RK':
+    case 'REDLICH-KWONG':
+    case 'REDLICH_KWONG':
+      return new RKPropertyPackage();
     case 'NRTL':
     case 'NRTL-RK':
     case 'NRTL-HOC':

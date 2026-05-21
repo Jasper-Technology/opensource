@@ -10,12 +10,14 @@ Jasper is a modern, browser-based process simulation tool for chemical engineers
 
 ### Thermodynamics
 
-Three property methods, selectable per-project:
+Five property methods, selectable per-project:
 
 | Method | Best For | K-Value Model |
 |--------|----------|---------------|
 | **Ideal** | Ideal mixtures, low pressure | Raoult's Law |
 | **Peng-Robinson** | Hydrocarbons, gases, high pressure | Fugacity (phi-phi) |
+| **SRK** | Hydrocarbon screening and gas processing | Fugacity (phi-phi) |
+| **RK** | Legacy cubic-EOS screening | Fugacity (phi-phi) |
 | **NRTL** | Polar/non-ideal liquids (ethanol-water, amines) | Activity coefficients (gamma-phi) |
 
 Property calculations include:
@@ -98,9 +100,10 @@ if (result.converged) {
 npx tsx src/sim/thermo/__tests__/quickmode-parity.test.ts
 ```
 
-16 tests covering all phases:
+18 tests covering all phases:
 - Lee-Kesler Pvap (water, ethanol, benzene, methane within 2%)
 - PR flash (propane-butane two-phase)
+- SRK/RK K-value ordering sanity checks
 - NRTL activity coefficients (ethanol-water gamma > 5)
 - Isentropic compressor (N2, 0.1% error vs textbook)
 - Benzene-toluene distillation (99% purity)
