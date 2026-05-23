@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Property Packages
 
-Property packages define the thermodynamic models used to calculate phase equilibrium, enthalpies, and densities. In Quick mode, three packages are available natively. Rigorous mode adds UNIQUAC and eNRTL via the IDAES backend.
+Property packages define the thermodynamic models used to calculate phase equilibrium, enthalpies, and densities. In Quick mode, five packages are available natively. Rigorous mode adds UNIQUAC and eNRTL via the IDAES backend.
 
 ## Quick Mode Packages (In-Browser)
 
@@ -39,6 +39,32 @@ The industry-standard cubic EOS for oil and gas applications. **Now available in
 | Best for | Hydrocarbons, natural gas, high-pressure, supercritical |
 
 PR provides rigorous VLE via fugacity coefficients, solving the cubic equation analytically (Cardano's method) and selecting the smallest Z root for liquid, largest for vapor.
+
+### SRK (Soave-Redlich-Kwong)
+
+Classic cubic EOS for hydrocarbon systems and gas processing.
+
+| Aspect | Detail |
+|--------|--------|
+| EOS | `P = RT/(V-b) - a(T)/[V(V+b)]` |
+| Flash | Phi-phi with SRK fugacity coefficients |
+| Enthalpy | Ideal gas + cubic departure function |
+| Entropy | Ideal gas + cubic departure function |
+| Density | From SRK compressibility factor Z |
+| Best for | Hydrocarbon screening, gas transmission, vapor-liquid checks |
+
+### RK (Redlich-Kwong)
+
+Legacy cubic EOS with a temperature-dependent attraction term.
+
+| Aspect | Detail |
+|--------|--------|
+| EOS | `P = RT/(V-b) - a(T)/[V(V+b)]` |
+| Flash | Phi-phi with RK fugacity coefficients |
+| Enthalpy | Ideal gas + cubic departure function |
+| Entropy | Ideal gas + cubic departure function |
+| Density | From RK compressibility factor Z |
+| Best for | Older design correlations, quick hydrocarbon screening |
 
 ### NRTL (Non-Random Two-Liquid)
 
@@ -102,7 +128,8 @@ Extended NRTL model for ionic species.
 
 | System Type | Quick Mode | Rigorous |
 |-------------|-----------|----------|
-| Light hydrocarbons, natural gas | PR | SRK or PR |
+| Light hydrocarbons, natural gas | PR or SRK | SRK or PR |
+| Legacy cubic screening | RK | RK |
 | High-pressure / supercritical | PR | PR |
 | Alcohol-water, polar organics | NRTL | NRTL |
 | Azeotropic distillation | NRTL | NRTL |

@@ -21,12 +21,16 @@ The Jasper frontend selects between engines per-project. Users can switch modes 
 An in-browser sequential-modular solver written in TypeScript. Runs entirely client-side with no backend dependency — perfect for teaching, prototyping, and instant feedback.
 
 ### Thermodynamics
+Five property methods, selectable per-project:
 
 | Method | Best For | K-Value Model |
 |--------|----------|---------------|
 | **Ideal** | Ideal mixtures, low pressure | Raoult's Law |
 | **Peng-Robinson** | Hydrocarbons, gases, high pressure | Fugacity (phi-phi) |
 | **NRTL** | Polar / non-ideal liquids (ethanol-water, amines) | Activity coefficients (gamma-phi) |
+| **SRK** | Hydrocarbon screening and gas processing | Fugacity (phi-phi) |
+| **RK** | Legacy cubic-EOS screening | Fugacity (phi-phi) |
+| **NRTL** | Polar/non-ideal liquids (ethanol-water, amines) | Activity coefficients (gamma-phi) |
 
 Property calculations include:
 - **Lee-Kesler** vapor pressure (1–3% error, boiling-point anchored)
@@ -193,6 +197,16 @@ opensource/
 ```
 
 ---
+18 tests covering all phases:
+- Lee-Kesler Pvap (water, ethanol, benzene, methane within 2%)
+- PR flash (propane-butane two-phase)
+- SRK/RK K-value ordering sanity checks
+- NRTL activity coefficients (ethanol-water gamma > 5)
+- Isentropic compressor (N2, 0.1% error vs textbook)
+- Benzene-toluene distillation (99% purity)
+- Water-gas shift reactor heat of reaction
+- Recycle convergence (3 iterations with Wegstein)
+- Kremser CO2 absorption
 
 ## Contributing
 

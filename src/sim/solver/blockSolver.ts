@@ -3,7 +3,7 @@
  *
  * Based on Jasper-Technology/opensource engine.
  * Solves flowsheet block-by-block with rigorous thermodynamics:
- * - Property method dispatch (Ideal, PR, NRTL)
+ * - Property method dispatch (Ideal, PR, SRK, RK, NRTL)
  * - Enthalpy/entropy-based energy balances
  * - Proper equipment sizing (pump power, compressor isentropic, heat duty)
  * - Shortcut distillation (Fenske-Underwood-Gilliland)

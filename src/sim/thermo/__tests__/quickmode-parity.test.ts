@@ -110,6 +110,22 @@ runTest('Phase 2: PR K-values via property package', () => {
   console.log(`  PASS: K_CH4=${K['CH4'].toFixed(4)}, K_C2H6=${K['C2H6'].toFixed(4)}`);
 });
 
+runTest('Phase 2: SRK K-values via property package', () => {
+  const pkg = getPropertyPackage('SRK');
+  const K = pkg.calculateKValues(['CH4', 'C2H6'], 200, 30e5);
+  assert(pkg.name === 'SRK', 'SRK package should be selected');
+  assert(K['CH4'] > K['C2H6'], 'CH4 should be more volatile than C2H6');
+  console.log(`  PASS: K_CH4=${K['CH4'].toFixed(4)}, K_C2H6=${K['C2H6'].toFixed(4)}`);
+});
+
+runTest('Phase 2: RK K-values via property package', () => {
+  const pkg = getPropertyPackage('RK');
+  const K = pkg.calculateKValues(['CH4', 'C2H6'], 200, 30e5);
+  assert(pkg.name === 'RK', 'RK package should be selected');
+  assert(K['CH4'] > K['C2H6'], 'CH4 should be more volatile than C2H6');
+  console.log(`  PASS: K_CH4=${K['CH4'].toFixed(4)}, K_C2H6=${K['C2H6'].toFixed(4)}`);
+});
+
 // ============================================================================
 // Phase 3: NRTL ethanol-water
 // ============================================================================
