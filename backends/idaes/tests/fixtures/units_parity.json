@@ -1,0 +1,236 @@
+[
+  {
+    "value": 100,
+    "from": "C",
+    "to": "K",
+    "expected": 373.15
+  },
+  {
+    "value": 0,
+    "from": "C",
+    "to": "K",
+    "expected": 273.15
+  },
+  {
+    "value": -40,
+    "from": "C",
+    "to": "F",
+    "expected": -40.000000000000064
+  },
+  {
+    "value": 32,
+    "from": "F",
+    "to": "K",
+    "expected": 273.15000000000003
+  },
+  {
+    "value": 212,
+    "from": "F",
+    "to": "C",
+    "expected": 100.00000000000006
+  },
+  {
+    "value": 491.67,
+    "from": "R",
+    "to": "K",
+    "expected": 273.15000000000003
+  },
+  {
+    "value": 1,
+    "from": "bar",
+    "to": "Pa",
+    "expected": 100000.0
+  },
+  {
+    "value": 1,
+    "from": "atm",
+    "to": "Pa",
+    "expected": 101325.0
+  },
+  {
+    "value": 14.7,
+    "from": "psi",
+    "to": "Pa",
+    "expected": 101352.93220957494
+  },
+  {
+    "value": 5,
+    "from": "barg",
+    "to": "bar",
+    "expected": 6.01325
+  },
+  {
+    "value": 100,
+    "from": "psig",
+    "to": "psi",
+    "expected": 114.69594877551344
+  },
+  {
+    "value": 100000.0,
+    "from": "Pa",
+    "to": "bar",
+    "expected": 1.0
+  },
+  {
+    "value": 1.01325,
+    "from": "bar",
+    "to": "atm",
+    "expected": 1.0
+  },
+  {
+    "value": 100,
+    "from": "kmol/h",
+    "to": "mol/s",
+    "expected": 27.77777777777778
+  },
+  {
+    "value": 1,
+    "from": "mol/s",
+    "to": "kmol/h",
+    "expected": 3.6
+  },
+  {
+    "value": 3600,
+    "from": "kg/h",
+    "to": "kg/s",
+    "expected": 1.0
+  },
+  {
+    "value": 1000,
+    "from": "lb/h",
+    "to": "kg/s",
+    "expected": 0.12599788055555558
+  },
+  {
+    "value": 24,
+    "from": "ton/d",
+    "to": "kg/s",
+    "expected": 0.2777777777777778
+  },
+  {
+    "value": 1,
+    "from": "kW",
+    "to": "W",
+    "expected": 1000.0
+  },
+  {
+    "value": 1,
+    "from": "GJ/h",
+    "to": "W",
+    "expected": 277777.77777777775
+  },
+  {
+    "value": 3412,
+    "from": "BTU/h",
+    "to": "W",
+    "expected": 999.9584914276224
+  },
+  {
+    "value": 1,
+    "from": "MMBtu/h",
+    "to": "W",
+    "expected": 293071.0701722223
+  },
+  {
+    "value": 1,
+    "from": "MWh",
+    "to": "J",
+    "expected": 3600000000.0
+  },
+  {
+    "value": 1000,
+    "from": "Btu",
+    "to": "J",
+    "expected": 1055055.8526200003
+  },
+  {
+    "value": 1,
+    "from": "ft",
+    "to": "m",
+    "expected": 0.30479999999999996
+  },
+  {
+    "value": 1,
+    "from": "inch",
+    "to": "m",
+    "expected": 0.0254
+  },
+  {
+    "value": 1,
+    "from": "ft2",
+    "to": "m2",
+    "expected": 0.09290303999999999
+  },
+  {
+    "value": 1,
+    "from": "ft3",
+    "to": "m3",
+    "expected": 0.028316846591999994
+  },
+  {
+    "value": 1,
+    "from": "gal",
+    "to": "L",
+    "expected": 3.785411783999999
+  },
+  {
+    "value": 1,
+    "from": "bbl",
+    "to": "L",
+    "expected": 158.98729492799993
+  },
+  {
+    "value": 60,
+    "from": "L/min",
+    "to": "m3/s",
+    "expected": 0.0010000000000000002
+  },
+  {
+    "value": 1,
+    "from": "gal/min",
+    "to": "m3/s",
+    "expected": 6.309019639999999e-05
+  },
+  {
+    "value": 1,
+    "from": "yr",
+    "to": "s",
+    "expected": 31557600.0
+  },
+  {
+    "value": 1,
+    "from": "day",
+    "to": "hr",
+    "expected": 24.0
+  },
+  {
+    "value": 1,
+    "from": "lb",
+    "to": "kg",
+    "expected": 0.4535923700000001
+  },
+  {
+    "value": 1,
+    "from": "ton",
+    "to": "kg",
+    "expected": 1000.0
+  },
+  {
+    "value": 1,
+    "from": "g/cm3",
+    "to": "kg/m3",
+    "expected": 999.9999999999999
+  },
+  {
+    "value": 1,
+    "from": "kJ/mol",
+    "to": "J/mol",
+    "expected": 1000.0
+  },
+  {
+    "value": 1,
+    "from": "Btu/lbmol",
+    "to": "J/mol",
+    "expected": 2.3260000000000005
+  }
+]

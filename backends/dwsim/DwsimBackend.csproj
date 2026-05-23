@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>DwsimBackend</RootNamespace>
+    <!-- DWSIM install path: reads DWSIM_PATH env var, falls back to .deb default -->
+    <DwsimPath>$([System.Environment]::GetEnvironmentVariable('DWSIM_PATH'))</DwsimPath>
+    <DwsimPath Condition="'$(DwsimPath)' == ''">/usr/local/lib/dwsim</DwsimPath>
+  </PropertyGroup>
+
+  <!-- Direct assembly references to DWSIM DLLs (no NuGet packages exist) -->
+  <ItemGroup>
+    <Reference Include="DWSIM.Automation">
+      <HintPath>$(DwsimPath)/DWSIM.Automation.dll</HintPath>
+    </Reference>
+    <Reference Include="DWSIM.Interfaces">
+      <HintPath>$(DwsimPath)/DWSIM.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="CapeOpen">
+      <HintPath>$(DwsimPath)/CapeOpen.dll</HintPath>
+    </Reference>
+    <Reference Include="DWSIM.Thermodynamics">
+      <HintPath>$(DwsimPath)/DWSIM.Thermodynamics.dll</HintPath>
+    </Reference>
+    <Reference Include="DWSIM.UnitOperations">
+      <HintPath>$(DwsimPath)/DWSIM.UnitOperations.dll</HintPath>
+    </Reference>
+    <Reference Include="DWSIM.SharedClasses">
+      <HintPath>$(DwsimPath)/DWSIM.SharedClasses.dll</HintPath>
+    </Reference>
+    <Reference Include="DWSIM.GlobalSettings">
+      <HintPath>$(DwsimPath)/DWSIM.GlobalSettings.dll</HintPath>
+    </Reference>
+    <Reference Include="DWSIM.MathOps">
+      <HintPath>$(DwsimPath)/DWSIM.MathOps.dll</HintPath>
+    </Reference>
+    <Reference Include="DWSIM.FlowsheetBase">
+      <HintPath>$(DwsimPath)/DWSIM.FlowsheetBase.dll</HintPath>
+    </Reference>
+    <Reference Include="DWSIM.FlowsheetSolver">
+      <HintPath>$(DwsimPath)/DWSIM.FlowsheetSolver.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

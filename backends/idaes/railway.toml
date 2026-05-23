@@ -1,0 +1,12 @@
+[build]
+builder = "dockerfile"
+
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+# Sleep after 10 minutes of inactivity to save costs
+# Service wakes automatically on next request (~2-3s)
+sleepAfter = 600
