@@ -237,20 +237,7 @@ Contributions are welcome! Please see our [contribution guidelines](CONTRIBUTING
 - Expanded TEA correlations (heat exchangers, distillation, reactors)
 - Optimization examples and benchmarks
 
-**Completed**
-- ~~Peng-Robinson EOS~~
-- ~~NRTL activity coefficients~~
-- ~~Lee-Kesler Pvap + Rackett density~~
-- ~~Isentropic compressor~~
-- ~~Shortcut distillation (FUG)~~
-- ~~Reactor heat of reaction + equilibrium~~
-- ~~Recycle convergence (Wegstein)~~
-- ~~Kremser absorber / stripper~~
-- ~~DWSIM service with queued simulate / poll API~~
-- ~~IDAES service with simulate / optimize / properties / TEA routes~~
-- ~~IDAES 2.11.0 pin + agent-driven `run_optimization` integration (per-variable + named-metric objectives, PARAM_ALIASES, init-before-unfix)~~
 
----
 
 ## License
 
