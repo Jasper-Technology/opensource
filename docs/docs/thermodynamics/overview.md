@@ -4,95 +4,88 @@ sidebar_position: 1
 
 # Thermodynamics Overview
 
-Jasper's thermodynamic engine provides rigorous property calculations for process simulation. Three property methods are available, selectable per-project.
+Jasper's thermodynamic engine calculates physical properties required for process simulation.
 
-## Property Methods
+## Capabilities
 
-| Method | Best For | K-Value Model |
-|--------|----------|---------------|
-| **Ideal** | Ideal mixtures, low pressure | Raoult's Law (K = Psat/P) |
-| **Peng-Robinson (PR)** | Hydrocarbons, gases, high pressure | Fugacity coefficients (phi-phi) |
-| **NRTL** | Polar/non-ideal liquids (alcohol-water, amines) | Activity coefficients (gamma-phi) |
-
-Set the property method in `project.thermodynamics.propertyMethod`:
-
-```typescript
-thermodynamics: { propertyMethod: 'NRTL' }  // or 'Ideal', 'PR'
-```
+| Property | Method | Status |
+|----------|--------|--------|
+| Heat capacity (Cp) | Polynomial correlation | Implemented |
+| Enthalpy | Integration of Cp | Implemented |
+| Vapor pressure | Antoine equation | Implemented |
+| VLE | Raoult's Law | Implemented |
+| Density | Ideal gas / liquid correlations | Partial |
 
 ## Property Calculation Flow
 
 ```
-Component Data (MW, Tc, Pc, omega, Tb, Hf, Cp coefficients)
+Component Data (MW, Tc, Pc, Cp coefficients, Antoine coefficients)
          │
          ▼
 ┌─────────────────┐
-│  Heat Capacity  │  →  Cp(T) = a + bT + cT² + dT³ + eT⁴
+│  Heat Capacity  │  →  Cp(T) = a + bT + cT² + dT³
 └─────────────────┘
          │
          ▼
 ┌─────────────────┐
-│    Enthalpy     │  →  H(T) = Hf + ∫Cp dT  (+departure for PR)
+│    Enthalpy     │  →  H(T) = ∫Cp dT + Hf
 └─────────────────┘
          │
          ▼
 ┌─────────────────┐
-│    Entropy      │  →  S(T,P) = ∫(Cp/T)dT - R·ln(P/Pref)  (+departure)
+│ Vapor Pressure  │  →  log(Psat) = A - B/(T+C)
 └─────────────────┘
          │
          ▼
 ┌─────────────────┐
-│ Vapor Pressure  │  →  Lee-Kesler: ln(Pr) = f0(Tr) + ω·f1(Tr)
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Liquid Density │  →  Rackett: Vs = (RTc/Pc)·Zra^(1+(1-Tr)^(2/7))
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│      VLE        │  →  Ideal: Ki = Psat/P
-│                 │     PR: Ki = φL/φV  (fugacity)
-│                 │     NRTL: Ki = γi·Psat/P
+│      VLE        │  →  Ki = Psat,i / P
 └─────────────────┘
 ```
 
-## Capabilities
+## Property method availability per engine
 
-| Property | Method | Accuracy |
-|----------|--------|----------|
-| Heat capacity (Cp) | DIPPR polynomial (5 coeff) | < 1% |
-| Enthalpy | Cp integration + departure functions | < 2% |
-| Entropy | Cp/T integration + departure functions | < 2% |
-| Vapor pressure | Lee-Kesler (boiling-point anchored) | < 2% at Tb |
-| Liquid density | Rackett equation | 5-12% |
-| VLE (ideal) | Raoult's Law | Ideal systems only |
-| VLE (PR) | Phi-phi flash with fugacity coefficients | Hydrocarbons ±5% |
-| VLE (NRTL) | Gamma-phi with BIP database (~20 pairs) | Polar ±5% |
-| Heat of reaction | ΔHf + ΔCp integration | < 2% |
+Each engine supports a different set of property methods. The IDAES column applies when optimization is invoked through the Jasper agent.
+
+| Method | Quick | Rigorous (DWSIM) | Optimize (IDAES, via agent) | Best for |
+|--------|:-----:|:----------------:|:---------------------------:|----------|
+| Ideal (Raoult's Law) | ✓ | ✓ | ✓ | Ideal mixtures, validation |
+| PR (Peng-Robinson) | ✓ | ✓ | ✓ | General-purpose VLE, hydrocarbons |
+| SRK (Soave-Redlich-Kwong) | — | ✓ | ✓ | Hydrocarbons, gas processing |
+| NRTL | ✓ | ✓ | ✓ | Polar / non-ideal liquids |
+| UNIQUAC | — | ✓ | ✓ | Strongly non-ideal liquids, LLE |
+| UNIFAC | — | ✓ | — | Group contribution estimates |
+| eNRTL | — | — | ✓ | Electrolytes, amines |
+| IAPWS-IF97 (steam) | — | ✓ | — | Steam cycles, utilities |
+| Electrolytes (DWSIM) | — | ✓ | — | Aqueous electrolyte systems |
+
+For a detailed guide on selecting and configuring property packages, see [Property Packages](/thermodynamics/property-packages).
+
+## Assumptions
+
+**Quick mode** (when using the Ideal property method specifically):
+- Ideal gas behavior for vapor phase
+- Ideal liquid solutions (Raoult's Law)
+- No solid phases
+
+Quick mode also supports PR and NRTL with full fugacity / activity coefficient calculations — pick those for non-ideal systems before reaching for a backend.
+
+**Planned improvements (Quick mode):**
+- Steam tables (IAPWS-IF97)
+- UNIQUAC / UNIFAC
+- Henry's Law for dissolved gases
+
+:::tip
+For electrolytes, amines, and steam cycles, use **Rigorous mode** (DWSIM provides IAPWS-IF97 steam tables and electrolyte property packages). For equation-oriented optimization with eNRTL, ask the agent — it routes through the IDAES backend.
+:::
 
 ## Units
 
 All internal calculations use SI units:
 
-| Property | Internal Unit | StreamState Unit |
-|----------|---------------|-----------------|
-| Temperature | K | K |
-| Pressure | Pa | bar |
-| Flow | kmol/h | kmol/h |
-| Enthalpy | kJ/mol | kJ/mol |
-| Heat capacity | J/(mol·K) | J/(mol·K) |
-| Density | kg/m³ | kg/m³ |
-| Entropy | kJ/(mol·K) | kJ/(mol·K) |
-
-## Source Files
-
-| File | Purpose |
-|------|---------|
-| `src/sim/thermo/properties.ts` | Cp, enthalpy, entropy, Pvap, density, VLE |
-| `src/sim/thermo/pengRobinson.ts` | PR EOS: cubic solver, fugacity, departure functions |
-| `src/sim/thermo/nrtl.ts` | NRTL activity coefficients |
-| `src/sim/thermo/bipDatabase.ts` | Binary interaction parameters (~20 common pairs) |
-| `src/sim/thermo/propertyMethod.ts` | PropertyPackage interface and factory |
-| `src/sim/thermo/componentDatabase.ts` | 70+ component property data |
+| Property | Internal Unit |
+|----------|---------------|
+| Temperature | K |
+| Pressure | Pa |
+| Flow | mol/s |
+| Enthalpy | J/mol |
+| Heat capacity | J/(mol·K) |

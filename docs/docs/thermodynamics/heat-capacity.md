@@ -2,75 +2,49 @@
 sidebar_position: 2
 ---
 
-# Heat Capacity & Thermodynamic Properties
+# Heat Capacity
 
-Heat capacity, enthalpy, entropy, and heat of reaction calculations.
+Heat capacity (Cp) is calculated using polynomial correlations.
 
-## Heat Capacity
+## Correlation
 
 ```
-Cp(T) = a + b·T + c·T² + d·T³ + e·T⁴
+Cp(T) = a + b*T + c*T² + d*T³
 ```
 
 Where:
 - `T` is temperature in Kelvin
-- `a, b, c, d, e` are DIPPR coefficients from the component database
+- `a, b, c, d` are component-specific coefficients
 - `Cp` is in J/(mol·K)
 
-## Enthalpy
+## Implementation
 
+```typescript
+export function getCp(componentId: string, T_K: number): number {
+  const comp = componentData[componentId];
+  if (!comp?.Cp_coef) return 29.1;
+  
+  const [a, b, c, d] = comp.Cp_coef;
+  return a + b * T_K + c * T_K ** 2 + d * T_K ** 3;
+}
 ```
-H(T) = Hf + ∫Cp dT from 298.15K to T
-```
-
-For PR property package, a departure function is added:
-
-```
-H = H_ig + H_dep(T, P, Z, a_mix, b_mix, da/dT)
-```
-
-## Entropy
-
-```
-S(T, P) = ∫(Cp/T)dT from 298.15K to T  -  R·ln(P/Pref)  -  R·Σ(xi·ln(xi))
-```
-
-For PR, a departure function is added. Entropy is used for:
-- Isentropic compressor/turbine calculations
-- Equilibrium constant estimation (ΔG = ΔH - TΔS)
-
-## Heat of Reaction
-
-```
-ΔHrxn(T) = Σ(νi · Hf,i) + ∫[Σ(νi · Cp,i)]dT from 298.15K to T
-```
-
-Used by reactor models for:
-- Adiabatic temperature rise/drop
-- Isothermal heat duty
-- Equilibrium constant from ΔG
 
 ## Example Values
 
-| Component | Cp at 298K | Hf (kJ/mol) |
-|-----------|-----------|-------------|
-| Water | 33.6 J/(mol·K) | -241.83 |
-| Methane | 35.7 J/(mol·K) | -74.52 |
-| Nitrogen | 29.1 J/(mol·K) | 0.0 |
-| CO2 | 37.1 J/(mol·K) | -393.51 |
-| CO | 29.1 J/(mol·K) | -110.53 |
-| Ethanol | 65.6 J/(mol·K) | -234.95 |
+| Component | Cp at 298K |
+|-----------|------------|
+| Water | 33.6 J/(mol·K) |
+| Methane | 35.7 J/(mol·K) |
+| Nitrogen | 29.1 J/(mol·K) |
 
-## Mixture Properties
+## Mixture Heat Capacity
 
 ```typescript
-// Mixture Cp (mole-fraction weighted)
-function idealGasCpMix(composition, T) {
-  return Σ xi · Cp_i(T)
-}
-
-// Mixture enthalpy
-function mixtureEnthalpy(composition, T, P) {
-  return Σ xi · H_i(T)  // + departure for PR
+export function getMixtureCp(composition: Record<string, number>, T_K: number): number {
+  let totalCp = 0;
+  for (const [compId, moleFrac] of Object.entries(composition)) {
+    totalCp += moleFrac * getCp(compId, T_K);
+  }
+  return totalCp;
 }
 ```

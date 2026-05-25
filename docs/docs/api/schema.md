@@ -2,31 +2,25 @@
 sidebar_position: 1
 ---
 
-# Schema Reference
+# API Schema
 
-TypeScript type definitions for the Jasper simulation engine.
+TypeScript type definitions for Jasper.
 
-## Core Types
-
-### StreamData
-
-Represents a process stream with thermodynamic state.
+## StreamData
 
 ```typescript
 interface StreamData {
   id: string;
-  T: number;           // Temperature (K)
-  P: number;           // Pressure (Pa)
-  flow: number;        // Molar flow (mol/s)
-  composition: Record<string, number>;  // Mole fractions
+  T: number;           // K
+  P: number;           // Pa
+  flow: number;        // mol/s
+  composition: Record<string, number>;
   phase?: 'L' | 'V' | 'VL';
-  H?: number;          // Molar enthalpy (J/mol)
+  H?: number;          // J/mol
 }
 ```
 
-### BlockData
-
-Represents a unit operation block.
+## BlockData
 
 ```typescript
 interface BlockData {
@@ -36,40 +30,17 @@ interface BlockData {
   inlet?: string;
   outlet?: string;
 }
-```
 
-### ParamValue
-
-Parameter values with unit support.
-
-```typescript
-type ParamValue =
-  | { kind: 'quantity'; q: { value: number; unit: string } }
-  | { kind: 'number'; n: number }
-  | { kind: 'option'; o: string };
-```
-
-## Block Types
-
-```typescript
 type BlockType =
-  | 'Feed'
-  | 'Sink'
-  | 'Mixer'
-  | 'Splitter'
-  | 'Heater'
-  | 'Cooler'
-  | 'Pump'
-  | 'Compressor'
-  | 'Flash'
-  | 'HeatExchanger'
-  | 'Reactor'
-  | 'DistillationColumn'
-  | 'Absorber'
-  | 'Stripper';
+  | 'Feed' | 'Sink'
+  | 'Mixer' | 'Splitter'
+  | 'Heater' | 'Cooler'
+  | 'Pump' | 'Compressor'
+  | 'Flash' | 'HeatExchanger'
+  | 'Reactor' | 'DistillationColumn';
 ```
 
-## Simulation Result
+## SimulationResult
 
 ```typescript
 interface SimulationResult {
@@ -78,35 +49,12 @@ interface SimulationResult {
   blocks: Record<string, BlockResult>;
   errors?: string[];
 }
-
-interface BlockResult {
-  id: string;
-  type: BlockType;
-  duty?: number;       // Heat duty (W)
-  work?: number;       // Shaft work (W)
-  converged: boolean;
-}
 ```
 
-## Quantity Units
+## Units
 
-### Temperature
-- `C` - Celsius
-- `K` - Kelvin
-- `F` - Fahrenheit
-
-### Pressure
-- `Pa` - Pascal
-- `bar` - Bar
-- `psi` - Pounds per square inch
-- `atm` - Atmosphere
-
-### Flow
-- `mol/s` - Moles per second
-- `kmol/h` - Kilomoles per hour
-- `kg/h` - Kilograms per hour
-
-### Energy
-- `W` - Watts
-- `kW` - Kilowatts
-- `kJ/h` - Kilojoules per hour
+| Property | Units |
+|----------|-------|
+| Temperature | C, K, F |
+| Pressure | Pa, bar, psi, atm |
+| Flow | mol/s, kmol/h, kg/h |

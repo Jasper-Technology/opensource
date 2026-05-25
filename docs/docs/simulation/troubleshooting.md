@@ -1,14 +1,14 @@
 ---
-sidebar_position: 3
+sidebar_position: 6
 ---
 
 # Troubleshooting
 
-Common issues when running rigorous mode simulations and how to resolve them.
+Common issues across the simulation engines (Quick, Rigorous) and agent-driven Optimize, plus how to resolve them.
 
 ## "Backend unavailable"
 
-**Cause:** The Railway container is sleeping or restarting (cold start).
+**Cause:** The Railway container hosting the Rigorous (DWSIM) backend or the IDAES optimization backend is sleeping or restarting (cold start).
 
 **Fix:**
 1. Wait approximately 30 seconds.
@@ -16,12 +16,44 @@ Common issues when running rigorous mode simulations and how to resolve them.
 3. If the issue persists after 60 seconds, check [Railway status](https://status.railway.app/).
 
 :::info
-The container auto-wakes on the first request. Subsequent requests within the active window respond in 2-10 seconds.
+The container auto-wakes on the first request. Subsequent requests within the active window respond in 2 – 10 seconds.
 :::
 
-## "Degrees of freedom != 0"
+## Rigorous (DWSIM) errors
 
-**Cause:** The flowsheet is under-specified (DOF > 0) or over-specified (DOF < 0).
+### `FileNotFoundException: DWSIM.Automation.dll`
+
+**Cause:** `DWSIM_PATH` environment variable is unset or points at a directory that doesn't contain the DWSIM DLL set. Only relevant when self-hosting the Rigorous backend.
+
+**Fix:** Install DWSIM and set `DWSIM_PATH` to its install directory (e.g. `/usr/local/lib/dwsim`). The directory must contain `DWSIM.Automation.dll` and its transitive dependencies. The assembly resolver in `Program.cs` reads from this path on demand.
+
+### "Compound not found: &lt;name&gt;"
+
+**Cause:** DWSIM couldn't resolve the component via CAS → name → formula fallback.
+
+**Fix:** Add the CAS number to the component in Jasper (most reliable), or check that the name matches DWSIM's compound database casing.
+
+### Rigorous solve timeout (&gt;5 min)
+
+**Cause:** The Rigorous backend caps each job at 5 minutes (`Program.cs`).
+
+**Fix:** Difficult recycles are the most common cause. Tighten tear-stream specifications, simplify the flowsheet, or split it into stages.
+
+### "Rigorous simulation requires Jasper Pro"
+
+**Cause:** Rigorous mode is part of the Jasper Pro tier.
+
+**Fix:** Upgrade to Pro, or stay in Quick mode for screening / ideal systems.
+
+## Optimize (IDAES, agent-driven) errors
+
+:::note
+Optimization is invoked through the Jasper agent — ask in chat (e.g. *"minimize H1 duty by varying its outlet temperature between 305 K and 360 K"*). There is no separate Optimize button. Errors below surface either in the agent's tool-call result or in the inline result card.
+:::
+
+### "Degrees of freedom != 0"
+
+**Cause:** The flowsheet is under-specified (DOF > 0) or over-specified (DOF < 0). IDAES requires an exactly square system.
 
 **Fix:**
 - **DOF > 0 (under-specified):** Add missing specifications. Common omissions:
@@ -36,33 +68,29 @@ Example: Flash drum with 3-component feed
   DOF = 0 ✓
 ```
 
-## "Solver did not converge"
+### "Solver did not converge" (IPOPT)
 
 **Cause:** IPOPT could not find a feasible solution within the iteration limit or tolerance.
 
 **Fix (in order of likelihood):**
 
-1. **Check initial guesses.** Poor initial values for temperature and pressure cause the solver to diverge. Ensure feed conditions are physically reasonable.
-2. **Reduce complexity.** Solve a simpler sub-flowsheet first (e.g., just the feed and first unit), then add blocks incrementally.
+1. **Check initial guesses.** Poor initial values for temperature and pressure cause the solver to diverge.
+2. **Reduce complexity.** Solve a simpler sub-flowsheet first, then add blocks incrementally.
 3. **Increase iterations.** Set `max_iterations` to 200 or 500 for large flowsheets.
-4. **Try a different property package.** Some models are more robust for certain chemical systems. SRK and PR generally converge more reliably than activity coefficient models.
-5. **Check for impossible specifications.** A heater cannot cool below ambient if duty is constrained positive. A flash at conditions outside the two-phase envelope will produce trivial solutions.
+4. **Try a different property package.** SRK and PR generally converge more reliably than activity coefficient models.
+5. **Check for impossible specifications.** A heater can't cool below ambient with positive duty. A flash outside the two-phase envelope produces trivial solutions.
 
 :::warning
 If the solver reports "infeasible," the specifications are likely physically inconsistent. Review your feed conditions and unit parameters before increasing iterations.
 :::
 
-## "Rate limit exceeded"
+### "Rate limit exceeded"
 
-**Cause:** More than 10 simulation submissions in the last 60 seconds from your IP.
+**Cause:** More than 10 simulation submissions in the last 60 seconds from your IP (Optimize backend only).
 
 **Fix:** Wait 1 minute. The rolling window resets automatically.
 
-:::tip
-Use Quick mode for rapid iteration and topology validation. Switch to Rigorous mode only for final solves.
-:::
-
-## Validation Errors
+## Validation errors (all modes)
 
 These errors are caught **before** the solver runs.
 
@@ -88,7 +116,7 @@ All Feed blocks require temperature, pressure, total flow, and composition for e
 Error: Feed "Feed-1" mole fractions sum to 0.95, expected 1.0
 ```
 
-Mole fractions for all components in a feed must sum to exactly 1.0 (within floating-point tolerance of 1e-6). Adjust component fractions so they total 1.0.
+Mole fractions must sum to 1.0 within floating-point tolerance.
 
 ### Unknown component
 
@@ -96,12 +124,12 @@ Mole fractions for all components in a feed must sum to exactly 1.0 (within floa
 Error: Component "CustomChem" not found in database
 ```
 
-Rigorous mode draws from a database of 70+ validated components. Custom or misspelled component names are rejected. Check the component selector for available species.
+Each mode draws from its own component database. Custom or misspelled names are rejected. Check the component selector for available species.
 
-## Still Stuck?
+## Still stuck?
 
 If none of the above resolves your issue:
 
-1. Open the browser developer console (`F12` > Console) and check for network errors.
-2. Verify your flowsheet solves in Quick mode first — this validates topology independently of the backend.
+1. Open the browser developer console (`F12` → Console) and check for network errors.
+2. Verify your flowsheet solves in **Quick** mode first — this validates topology independently of any backend.
 3. Simplify the flowsheet to the minimum reproducing case.

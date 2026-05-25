@@ -9,6 +9,51 @@ export const QuantitySchema = z.object({
 });
 export type Quantity = z.infer<typeof QuantitySchema>;
 
+// Per-reactor reaction entry. Stoichiometry is stored as positive
+// magnitudes; the reactant/product role lives in which dict it's listed
+// under. `spec` carries the kinetics/equilibrium/conversion knob that
+// distinguishes RStoic vs REquil vs RCSTR/RPfr — one schema covers all
+// four so the editor and sanitizer can stay generic.
+//
+// spec.kind:
+//   'conversion' — RStoic. Fractional extent on a reference reactant.
+//   'keq'        — REquil. Equilibrium constant (or 'auto' to compute
+//                  from ΔG at the operating T).
+//   'kinetic'    — RCSTR / RPfr. Arrhenius A + Ea + per-reactant order;
+//                  solver integrates over residence time.
+export const ReactionSpecSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('conversion'),
+    conversion: z.number().min(0).max(1),
+    referenceComponent: z.string(),
+  }),
+  z.object({
+    kind: z.literal('keq'),
+    keq: z.number().optional(),    // undefined → compute from ΔG at T
+  }),
+  z.object({
+    kind: z.literal('kinetic'),
+    A: z.number(),                  // pre-exponential, in chosen units
+    Ea: z.number(),                 // activation energy, J/mol
+    T_ref: z.number().optional(),
+    orders: z.record(z.string(), z.number()).optional(),
+  }),
+]);
+export type ReactionSpec = z.infer<typeof ReactionSpecSchema>;
+
+export const ReactionEntrySchema = z.object({
+  id: z.string(),
+  reactants: z.record(z.string(), z.number()),
+  products: z.record(z.string(), z.number()),
+  spec: ReactionSpecSchema,
+});
+export type ReactionEntry = z.infer<typeof ReactionEntrySchema>;
+
+// Back-compat alias — earlier code referenced RStoicReaction. New code
+// should use ReactionEntry directly.
+export const RStoicReactionSchema = ReactionEntrySchema;
+export type RStoicReaction = ReactionEntry;
+
 // ParamValue union
 export const ParamValueSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('quantity'), q: QuantitySchema }),
@@ -18,6 +63,7 @@ export const ParamValueSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('boolean'), b: z.boolean() }),
   z.object({ kind: z.literal('enum'), e: z.string() }),
   z.object({ kind: z.literal('composition'), comp: z.record(z.string(), z.number()) }), // Mole fractions by component ID
+  z.object({ kind: z.literal('reactionSet'), reactions: z.array(ReactionEntrySchema) }),
 ]);
 export type ParamValue = z.infer<typeof ParamValueSchema>;
 
@@ -29,13 +75,17 @@ export const UnitTypeSchema = z.enum([
   'Flash',
   'Pump',
   'Compressor',
+  'Expander',             // Phase 2 — gas expansion / turbine
   'Valve',
   'Heater',
   'Cooler',
   'HeatExchanger',
+  'PipeSegment',          // Phase 2 — friction + elevation pressure drop (DWSIM-only)
   'Absorber',
   'Stripper',
   'DistillationColumn',
+  'ShortcutDistillation', // Phase 2 — Fenske–Underwood–Gilliland (DWSIM-only)
+  'ReactiveDistillation', // Phase 2 — reactive distillation column (DWSIM-only)
   'Reactor',   // legacy — kept for backward compat
   'RCSTR',     // Continuous Stirred Tank Reactor (Aspen RCSTR)
   'RPfr',      // Plug Flow Reactor (Aspen RPlug)
@@ -45,6 +95,7 @@ export const UnitTypeSchema = z.enum([
   'REquil',    // Equilibrium Reactor (Aspen REquil)
   'RGibbs',    // Gibbs Free Energy Reactor (Aspen RGibbs)
   'Separator',
+  'ThreePhaseSeparator',  // Phase 2 — gas-oil-water (DWSIM-only)
   'Sink',
   'TextBox',
 ]);

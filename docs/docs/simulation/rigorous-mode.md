@@ -1,100 +1,162 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 # Rigorous Mode
 
-Equation-oriented process simulation using the [IDAES](https://idaes.org/) framework, [Pyomo](https://www.pyomo.org/) algebraic modeling language, and the [IPOPT](https://coin-or.github.io/Ipopt/) nonlinear solver.
+Industrial-grade simulation powered by [DWSIM](https://dwsim.org), an open-source process simulator with a ~500-component database and a full library of unit operations. Rigorous mode runs on Jasper's Railway-hosted DWSIM backend — you get DWSIM's capabilities in the browser without installing anything.
 
-## What It Is
+:::info Pro feature
+Rigorous mode is part of the **Jasper Pro** tier. Sign in with a Pro account to enable it from the engine selector.
+:::
 
-Rigorous mode formulates your entire flowsheet as a single system of nonlinear algebraic equations and solves them simultaneously. Unlike the sequential modular approach in Quick mode, this handles tightly coupled recycle loops, non-ideal thermodynamics, and complex unit operations without iterative tear-stream convergence.
+Source: [`opensource/backends/dwsim/`](https://github.com/Jasper-Technology/opensource/tree/main/backends/dwsim)
 
-## Backend Architecture
+## What it is
+
+A C# / .NET 8 microservice wrapping DWSIM's `Automation3` API. It accepts Jasper's flowsheet JSON, translates it into a DWSIM flowsheet, solves it, and returns stream + unit results.
+
+| Aspect | Detail |
+|--------|--------|
+| Engine | DWSIM (via DWSIM.Automation3) |
+| Runtime | .NET 8 |
+| Latency | 2 – 30 s typical |
+| Auth | `X-API-Key` header + Pro tier check |
+| CORS | Allowlist (required in production) |
+| Per-job timeout | 5 minutes |
+| Queue | In-process, single Railway instance |
+
+## When to use it
+
+- The flowsheet is industrial / non-ideal (azeotropes, electrolytes, polar systems at high pressure)
+- You need CSTR / PFR / Gibbs / equilibrium / stoichiometric reactors
+- You need DWSIM's broad property-package coverage (PR, SRK, NRTL, UNIQUAC, UNIFAC, IAPWS-IF97 steam, DWSIM electrolytes)
+- You're doing final design verification rather than screening
+
+If Quick mode converges and you only need ballpark numbers, stay in Quick. Switch to Rigorous when accuracy matters.
+
+## Architecture
 
 ```
 Browser (React)
     │
-    │  POST /api/simulate
+    │  POST /api/simulate   (X-API-Key)
     ▼
-FastAPI service (Railway)
+ASP.NET Core service (Railway)
     │
-    ├─ Validate flowsheet JSON
-    ├─ Enqueue simulation job
+    ├─ ApiKeyAuthMiddleware  →  reject if X-API-Key invalid
+    ├─ SimulationQueue.Enqueue → returns { job_id, position, queue_length }
     │
-    │  { job_id, status, position, queue_length }
+    │  Background thread:
+    │     1. Directory.SetCurrentDirectory(DWSIM_PATH)   ← needed for DWSIM's compound DB
+    │     2. Automation3.CreateFlowsheet()
+    │     3. AddCompound() per component (CAS → name → formula fallback)
+    │     4. AddPropertyPackage() via PropertyPackageMapper
+    │     5. AddFlowsheetObject() per Jasper unit, wire streams
+    │     6. flowsheet.RequestCalculation()
+    │     7. extract stream + unit results
+    │
+    │  Polled by client:
     ▼
-Browser (React)
-    │
-    │  Poll GET /api/jobs/{job_id} every 2 s
+GET /api/jobs/{job_id}
+    │  → { status: "done"|"running"|"failed", result, error }
     ▼
-FastAPI service (Railway)
-    │
-    ├─ Build IDAES model (Pyomo ConcreteModel)
-    ├─ Select property package
-    ├─ Apply specifications & initial guesses
-    ├─ Solve with IPOPT
-    │
-    │  { status: "done", result: { ... } }
-    ▼
-Browser (React)
-    │
-    └─ Display results in stream table & unit panels
+Browser (React) renders stream table + unit panels
 ```
 
-The FastAPI backend runs on Railway as a containerized service. It accepts a flowsheet payload, enqueues a simulation job, and returns a `job_id`. The client polls for results until the job completes.
+The assembly resolver in `Program.cs` (top of the file) loads DWSIM's transitive dependencies from `DWSIM_PATH`. Without it, DWSIM throws `FileNotFoundException` for unresolved DLLs as soon as you touch its types.
 
-## How It Works
+## Endpoints
 
-### 1. Submit
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| `GET` | `/api/health` | none | Wake ping. Returns `engine`, `engine_version`, `solver_available`. |
+| `GET` | `/api/units` | none | Supported unit operations + property methods. |
+| `POST` | `/api/simulate` | `X-API-Key` | Submit a flowsheet. Returns `{ job_id, status, position, queue_length }`. |
+| `GET` | `/api/jobs/{job_id}` | `X-API-Key` | Poll job status. Returns `{ status, position, result, error, messages }`. |
 
-When you press **Run** with Rigorous mode selected, the client sends a `POST /api/simulate` request containing:
+### Submit and poll
 
-- Flowsheet topology (blocks, arcs)
-- Component list
-- Property package selection
-- Stream specifications (T, P, flow, composition)
-- Unit operation parameters
-- Solver configuration
+```http
+POST /api/simulate
+X-API-Key: <key>
+Content-Type: application/json
 
-The endpoint returns a job descriptor immediately:
+{ "project": { ... Jasper flowsheet ... }, "options": { ... } }
+```
 
 ```json
 { "job_id": "abc-123", "status": "queued", "position": 2, "queue_length": 5 }
 ```
 
-### 2. Poll for Results
+Then poll every 2 seconds:
 
-The client polls `GET /api/jobs/{job_id}` every 2 seconds. While the job is running, the response contains:
-
-```json
-{ "status": "running", "result": null, "error": null }
+```http
+GET /api/jobs/abc-123
+X-API-Key: <key>
 ```
 
-When the job finishes, the response contains the full simulation result:
-
 ```json
-{ "status": "done", "result": { ... }, "error": null }
+{ "status": "done", "result": { "streams": [...], "units": [...] }, "error": null }
 ```
 
-If the solve fails, the response includes an error message:
+## Supported unit operations
 
-```json
-{ "status": "failed", "result": null, "error": "Solver terminated with infeasible status" }
-```
+The Jasper-to-DWSIM mapping (`Services/DwsimSolver.cs`):
 
-### 3. Result Schema
+| Jasper type | DWSIM object |
+|-------------|--------------|
+| `Feed` | Material Stream (source) |
+| `Sink` | Material Stream (sink) |
+| `Flash` | Gas-Liquid Separator |
+| `Mixer` | Stream Mixer |
+| `Splitter` | Stream Splitter |
+| `Heater` | Heater |
+| `Cooler` | Cooler |
+| `Pump` | Pump |
+| `Compressor` | Compressor |
+| `Valve` | Valve |
+| `HeatExchanger` | Heat Exchanger |
+| `DistillationColumn` | Distillation Column |
+| `Absorber` | Absorption Column |
+| `Stripper` | Absorption Column |
+| `RCSTR` | Continuous Stirred Tank Reactor (CSTR) |
+| `RPfr` | Plug-Flow Reactor (PFR) |
+| `REquil` | Equilibrium Reactor |
+| `RGibbs` | Gibbs Reactor |
+| `RStoic` / `RYield` | Conversion Reactor |
 
-When `status` is `"done"`, the `result` object has the following shape:
+## Property packages
+
+| Jasper name | DWSIM package |
+|-------------|---------------|
+| `Ideal` (or `Raoults`) | Raoult's Law |
+| `PR` / `Peng-Robinson` | Peng-Robinson (PR) |
+| `SRK` / `Soave-Redlich-Kwong` | SRK |
+| `NRTL` | NRTL |
+| `UNIQUAC` | UNIQUAC |
+| `UNIFAC` | UNIFAC |
+| `Steam` / `IAPWS` | Steam Tables (IAPWS-IF97) |
+
+Unmapped methods fall back to Peng-Robinson.
+
+## Component resolution
+
+For each Jasper component, the backend tries DWSIM's `AddCompound` in this order:
+
+1. **CAS number** (most reliable)
+2. **Name** (case-sensitive in DWSIM's DB)
+3. **Formula** (fallback)
+
+If none of the three resolve, the run fails with `"Compound not found: <name>"`. Add a CAS number to the component in Jasper to fix the most common case.
+
+## Result schema
 
 ```typescript
 interface RigorousResult {
   status: string;              // "done"
   converged: boolean;
-  solver_status: string;       // "optimal" | "infeasible" | "maxIterations" | ...
-  iterations: number;
   solve_time: number;          // seconds
-  degrees_of_freedom: number;
   messages: string[];
 
   streams: Array<{
@@ -107,7 +169,7 @@ interface RigorousResult {
     flow_mass: number;         // kg/s
     phase: string;
     vapor_fraction: number;
-    composition: Record<string, number>;  // mole fractions
+    composition: Record<string, number>;
     enthalpy: number;          // J/mol
     entropy: number;           // J/(mol·K)
     density: number;           // kg/m³
@@ -118,74 +180,40 @@ interface RigorousResult {
     id: string;
     name: string;
     type: string;
-    duty?: number;             // W (heaters, coolers, condensers)
-    work?: number;             // W (pumps, compressors)
+    duty?: number;             // W
+    work?: number;             // W
     pressure_drop?: number;    // Pa
-    efficiency?: number;
     custom_results?: Record<string, number>;
   }>;
 }
 ```
 
+## Cold start and queue behavior
+
+- The Railway container sleeps after inactivity. First request triggers a ~30 s cold start, then runs at normal speed.
+- The simulation queue is in-process and per-Railway-instance. If multiple users submit at once, `position` reflects your spot in line.
+- Per-job timeout is **5 minutes**. The thread keeps running on timeout (no hard cancel for arbitrary .NET code), but the queue slot frees so the next caller isn't blocked.
+
+## Local development
+
+```bash
+cd backends/dwsim
+export DWSIM_PATH=/usr/local/lib/dwsim         # must contain DWSIM.Automation.dll
+export CORS_ORIGINS=http://localhost:5173
+export JASPER_API_KEY=dev-key
+export ASPNETCORE_ENVIRONMENT=Development
+dotnet run
+```
+
+Or use the included `Dockerfile` and `railway.toml` to build a container.
+
 :::info
-The `/api/simulate` endpoint requires an `X-API-Key` header for authentication. Set the key via the `VITE_IDAES_API_KEY` environment variable in your `.env` file.
+DWSIM is GPL-licensed. The Jasper backend service that wraps it is MIT — but the DWSIM binaries loaded at runtime remain under their original GPL license. Read [DWSIM's license](https://github.com/DanWBR/dwsim) before redistributing a packaged binary.
 :::
-
-## Solver Configuration
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `solver` | `ipopt` | Nonlinear solver |
-| `max_iterations` | `100` | Maximum solver iterations |
-| `tolerance` | `1e-6` | Convergence tolerance (absolute) |
-
-:::tip
-For difficult convergence cases, you can increase `max_iterations` to 200-500. Loosening `tolerance` to `1e-5` may help borderline cases converge but reduces accuracy.
-:::
-
-## Degrees of Freedom
-
-IDAES requires the equation system to be **square** — the number of variables must equal the number of equations. The degrees of freedom (DOF) must be exactly **0**.
-
-```
-DOF = (number of variables) - (number of equations)
-```
-
-| DOF | Meaning | Action |
-|-----|---------|--------|
-| 0 | Square system | Ready to solve |
-| > 0 | Under-specified | Add more specifications (feed conditions, unit params) |
-| < 0 | Over-specified | Remove redundant specifications |
-
-The backend validates DOF before attempting a solve and returns an error if DOF is not 0.
-
-## Cold Start Behavior
-
-The Railway container may enter a sleep state after periods of inactivity. The first request after a sleep triggers a **cold start**:
-
-- Container wake-up takes approximately **30 seconds**.
-- Subsequent requests run at normal speed (2-10 s typical).
-- The client automatically retries on connection timeout.
-
-:::warning
-If you see "Backend unavailable," wait ~30 seconds and try again. The container is waking up.
-:::
-
-## Rate Limiting
-
-To protect the shared backend, rigorous mode enforces:
-
-- **10 submissions per IP address per minute**
-- Exceeding the limit returns a `429 Too Many Requests` response
-- The limit resets on a rolling 60-second window
-
-## Property Packages
-
-Rigorous mode supports multiple thermodynamic models. Select one via the **property method selector in the toolbar**. See [Property Packages](../thermodynamics/property-packages.md) for details on each model.
 
 ## Limitations
 
-- Requires internet connection to reach the Railway backend.
-- Cold starts add latency on first use.
-- Maximum flowsheet size: 50 blocks per submission.
-- Reactive systems limited to stoichiometric and equilibrium reactor models.
+- 5-minute per-job timeout — difficult recycles may need to be split
+- In-memory queue — restarting the Railway instance loses in-flight jobs (clients see `404` on poll, retry resubmits)
+- DWSIM doesn't expose every internal solver knob through `Automation3` — advanced solver tuning still needs the DWSIM desktop app
+- No degrees-of-freedom check (DWSIM is sequential modular under the hood) — flowsheet specifications are validated by DWSIM as it solves, not up front

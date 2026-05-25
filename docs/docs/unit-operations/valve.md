@@ -20,7 +20,7 @@ Specify either `outletP` or `dP` — the other is calculated automatically.
 | Mode | Description |
 |------|-------------|
 | Quick | Isenthalpic flash — assumes H_out = H_in and solves for outlet T at the new pressure |
-| Rigorous | IDAES `Valve` model with full thermodynamic property evaluation |
+| Rigorous | DWSIM `Valve` unit operation with full property-package evaluation |
 
 ## Ports
 

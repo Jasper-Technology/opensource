@@ -81,6 +81,9 @@ class IdaesModelBuilder:
         self.arc_phase_map: dict[str, str | None] = {}  # edge ID -> source port phase (V/L/None)
         self.arc_warnings: list[str] = []   # port-lookup failures surfaced to messages
         self.rxn_pkg: Optional[Any] = None  # IDAES reaction parameter block
+        self.node_type_map: dict[str, str] = {
+            n.id: n.type for n in project.flowsheet.nodes
+        }
 
     def build(self) -> ConcreteModel:
         """Build complete IDAES model from Jasper project."""
@@ -781,8 +784,54 @@ class IdaesModelBuilder:
         "work_mechanical", "efficiency_isentropic",
     })
 
+    # Frontend-facing param name → internal IDAES attribute path, per unit type.
+    # Lets the caller speak the same vocabulary as /api/units (T, P, duty, …)
+    # without knowing the underlying Pyomo attribute names.
+    PARAM_ALIASES: dict[str, dict[str, str]] = {
+        "Feed":        {"T": "outlet.temperature", "P": "outlet.pressure",
+                        "flow": "outlet.flow_mol"},
+        "Heater":      {"T": "outlet.temperature", "outletT": "outlet.temperature",
+                        "P": "outlet.pressure",
+                        "duty": "heat_duty", "Q": "heat_duty"},
+        "Cooler":      {"T": "outlet.temperature", "outletT": "outlet.temperature",
+                        "P": "outlet.pressure",
+                        "duty": "heat_duty", "Q": "heat_duty"},
+        "Flash":       {"T": "control_volume.properties_out.temperature",
+                        "P": "control_volume.properties_out.pressure",
+                        "duty": "heat_duty", "Q": "heat_duty"},
+        "Pump":        {"dP": "deltaP", "deltaP": "deltaP",
+                        "outletP": "outlet.pressure",
+                        "work": "work_mechanical", "W": "work_mechanical",
+                        "efficiency": "efficiency_isentropic"},
+        "Compressor":  {"dP": "deltaP", "deltaP": "deltaP",
+                        "outletP": "outlet.pressure",
+                        "T": "outlet.temperature",
+                        "work": "work_mechanical", "W": "work_mechanical",
+                        "efficiency": "efficiency_isentropic"},
+        "Valve":       {"dP": "deltaP", "deltaP": "deltaP",
+                        "outletP": "outlet.pressure"},
+    }
+
+    def _resolve_param_path(self, unit_id: str, parameter: str) -> Optional[str]:
+        """Map a frontend param name to a dotted attribute path, or return
+        the parameter as-is if it's already a valid path."""
+        unit_type = self.node_type_map.get(unit_id)
+        alias_table = self.PARAM_ALIASES.get(unit_type or "", {})
+        return alias_table.get(parameter, parameter)
+
     def get_variable(self, unit_id: str, parameter: str):
-        """Get a Pyomo variable from a unit for optimization.
+        """Get a Pyomo scalar variable from a unit for optimization.
+
+        Accepts either:
+          - a frontend param name (T, P, duty, dP, work, flow, outletT, outletP)
+            which is mapped via PARAM_ALIASES per unit type, or
+          - a raw dotted attribute path (e.g. "outlet.temperature",
+            "heat_duty"), traversed against the IDAES unit.
+
+        Resulting attribute may be an IndexedVar (e.g. unit.heat_duty), in
+        which case the time-0 element is returned so the caller always gets
+        a scalar suitable for unfix(), setlb(), setub(), set_value(), and
+        use in objective/constraint expressions.
 
         Only attribute names in ALLOWED_VARIABLE_PARTS may be traversed
         to prevent arbitrary attribute access on internal model objects.
@@ -791,7 +840,11 @@ class IdaesModelBuilder:
         if not unit:
             return None
 
-        parts = parameter.split('.')
+        path = self._resolve_param_path(unit_id, parameter)
+        if path is None:
+            return None
+
+        parts = path.split('.')
         if not all(p in self.ALLOWED_VARIABLE_PARTS for p in parts):
             return None
 
@@ -801,10 +854,51 @@ class IdaesModelBuilder:
             if obj is None:
                 return None
 
+        # If we landed on an IndexedVar (e.g. unit.heat_duty indexed by time),
+        # return the time-0 scalar so callers can call .unfix()/.setlb()/etc.
+        try:
+            from pyomo.core.base.var import IndexedVar
+            if isinstance(obj, IndexedVar):
+                try:
+                    return obj[0]
+                except KeyError:
+                    # Some IndexedVars use different index sets; grab the first.
+                    first_key = next(iter(obj), None)
+                    if first_key is not None:
+                        return obj[first_key]
+                    return None
+        except ImportError:
+            pass
+
         return obj
 
-    def build_objective_expression(self, metric: str):
-        """Build objective expression for optimization."""
+    def build_objective_expression(self, metric):
+        """Build objective expression for optimization.
+
+        Accepts either:
+          - a named metric string ("total_duty", "total_work", "COM",
+            "total_cost") — legacy behavior, sums across the flowsheet, or
+          - a dict {"unit_id": str, "parameter": str} — the value of the
+            referenced decision variable (resolved via get_variable).
+
+        Returns a Pyomo expression suitable for use as Objective(expr=...).
+        Raises ValueError if the variable can't be resolved.
+        """
+        if isinstance(metric, dict):
+            unit_id = metric.get("unit_id")
+            parameter = metric.get("parameter")
+            if not unit_id or not parameter:
+                raise ValueError(
+                    "objective dict must include 'unit_id' and 'parameter'"
+                )
+            var = self.get_variable(unit_id, parameter)
+            if var is None:
+                raise ValueError(
+                    f"objective variable {unit_id}.{parameter} could not be "
+                    f"resolved on the model"
+                )
+            return var
+
         if metric == 'total_duty':
             duties = []
             for unit in self.unit_map.values():

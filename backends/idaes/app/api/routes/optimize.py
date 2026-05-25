@@ -75,26 +75,65 @@ async def run_optimization(request: OptimizeRequest, _key: str = Depends(require
         model = builder.build()
         messages.append("Model built successfully")
 
-        # Unfix decision variables
+        # Initialize the model FIRST while decision variables are still
+        # fixed at their default spec values. This gives IDAES a feasible
+        # starting point — initialization on a model with unfixed variables
+        # is fragile and tends to land outside reasonable bounds.
+        builder.initialize()
+        messages.append("Model initialized")
+
+        # Now unfix decision variables and apply bounds + initial guess.
+        # Note: a Pyomo Var is truthy in expression contexts, so we MUST
+        # use `is not None` here, not `if var:`.
         for dv in request.decision_variables:
             var = builder.get_variable(dv.unit_id, dv.parameter)
-            if var:
-                var.unfix()
-                if dv.lower_bound is not None:
-                    var.setlb(dv.lower_bound)
-                if dv.upper_bound is not None:
-                    var.setub(dv.upper_bound)
-                if dv.initial_value is not None:
-                    var.set_value(dv.initial_value)
+            if var is None:
+                messages.append(
+                    f"Warning: decision variable {dv.unit_id}.{dv.parameter} "
+                    f"not found on the model"
+                )
+                continue
+            var.unfix()
+            if dv.lower_bound is not None:
+                var.setlb(dv.lower_bound)
+            if dv.upper_bound is not None:
+                var.setub(dv.upper_bound)
+            if dv.initial_value is not None:
+                var.set_value(dv.initial_value)
+            elif var.value is not None:
+                # If caller didn't supply an initial guess, clamp the
+                # initialize-derived value into the bounds so IPOPT
+                # starts feasible.
+                lb = var.lb if dv.lower_bound is None else dv.lower_bound
+                ub = var.ub if dv.upper_bound is None else dv.upper_bound
+                v = var.value
+                if lb is not None and v < lb:
+                    var.set_value(lb)
+                elif ub is not None and v > ub:
+                    var.set_value(ub)
 
-        # Add objective function
-        obj_metric = request.objective.get('metric', 'total_cost')
+        # Add objective function.
+        #
+        # Two accepted shapes:
+        #   1. {"metric": "total_cost"|"COM"|"total_duty"|"total_work",
+        #       "sense": "minimize"|"maximize"}                  (legacy)
+        #   2. {"unit_id": "H1", "parameter": "duty",
+        #       "sense": "minimize"|"maximize"}                  (per-variable)
         obj_sense = request.objective.get('sense', 'minimize')
+        if 'unit_id' in request.objective and 'parameter' in request.objective:
+            obj_arg = {
+                "unit_id": request.objective['unit_id'],
+                "parameter": request.objective['parameter'],
+            }
+            obj_label = f"{obj_arg['unit_id']}.{obj_arg['parameter']}"
+        else:
+            obj_arg = request.objective.get('metric', 'total_cost')
+            obj_label = obj_arg
 
-        obj_expr = builder.build_objective_expression(obj_metric)
+        obj_expr = builder.build_objective_expression(obj_arg)
         sense = minimize if obj_sense == 'minimize' else maximize
         model.optimization_objective = Objective(expr=obj_expr, sense=sense)
-        messages.append(f"Objective: {obj_sense} {obj_metric}")
+        messages.append(f"Objective: {obj_sense} {obj_label}")
 
         # Apply constraints
         from pyomo.environ import Constraint as PyomoConstraint
@@ -112,8 +151,7 @@ async def run_optimization(request: OptimizeRequest, _key: str = Depends(require
                 elif con.type == 'equality':
                     setattr(model, f"opt_con_{i}", PyomoConstraint(expr=var == con.bound))
 
-        # Initialize and solve
-        builder.initialize()
+        # Solve (initialization happened above, before unfixing).
         options = request.options or OptimizationOptions()
         result = builder.solve(
             solver=options.solver,
@@ -129,7 +167,7 @@ async def run_optimization(request: OptimizeRequest, _key: str = Depends(require
         optimal_vars = {}
         for dv in request.decision_variables:
             var = builder.get_variable(dv.unit_id, dv.parameter)
-            if var:
+            if var is not None and var.value is not None:
                 optimal_vars[f"{dv.unit_id}.{dv.parameter}"] = float(var.value)
 
         converged = str(result.solver.termination_condition) == "optimal"
