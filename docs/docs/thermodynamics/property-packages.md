@@ -4,9 +4,9 @@ sidebar_position: 4
 
 # Property Packages
 
-Property packages define the thermodynamic models used to calculate phase equilibrium, enthalpies, and densities. In Quick mode, five packages are available natively. Rigorous mode adds UNIQUAC and eNRTL via the IDAES backend.
+Property packages define the thermodynamic models used to calculate phase equilibrium, enthalpies, and densities. In Quick mode, five packages are available natively. Rigorous mode adds UNIQUAC and eNRTL via the IDAES backend. Select a package via the **property method selector in the toolbar**.
 
-## Quick Mode Packages (In-Browser)
+## Available Packages
 
 ### Ideal
 
@@ -15,10 +15,8 @@ Simple property calculations assuming ideal gas and ideal liquid behavior.
 | Aspect | Detail |
 |--------|--------|
 | VLE model | Raoult's Law: `Ki = Psat,i(T) / P` |
-| Vapor pressure | Lee-Kesler correlation (boiling-point anchored, 1-3% error) |
-| Liquid density | Rackett equation |
-| Enthalpy | Ideal gas: `H = Hf + ∫Cp dT` |
-| Entropy | `S = ∫(Cp/T)dT - R·ln(P/Pref)` |
+| Vapor phase | Ideal gas |
+| Liquid phase | Ideal solution |
 | Best for | Light gases, similar-molecule mixtures, screening studies |
 
 :::tip
@@ -95,7 +93,7 @@ The NRTL flash iterates K-values with composition-dependent activity coefficient
 Pairs without BIP data fall back to ideal behavior (γ = 1). If your system needs specific BIPs not in the database, use Rigorous mode or contribute new BIPs.
 :::
 
-## Rigorous Mode Packages (IDAES Backend)
+## Rigorous Mode Packages (DWSIM + IDAES Backends)
 
 ### SRK (Soave-Redlich-Kwong)
 
@@ -104,25 +102,69 @@ Cubic equation of state with Soave's alpha function.
 | Aspect | Detail |
 |--------|--------|
 | EOS | `P = RT/(V-b) - a(T)/[V(V+b)]` |
+| Vapor phase | SRK EOS |
+| Liquid phase | SRK EOS |
 | Best for | Hydrocarbons, natural gas processing, refinery applications |
+
+SRK handles non-ideal vapor behavior well and is the standard choice for hydrocarbon systems at moderate pressures.
+
+### PR (Peng-Robinson)
+
+The industry-standard cubic EOS for oil and gas applications.
+
+| Aspect | Detail |
+|--------|--------|
+| EOS | `P = RT/(V-b) - a(T)/[V(V+b) + b(V-b)]` |
+| Vapor phase | PR EOS |
+| Liquid phase | PR EOS |
+| Best for | Oil & gas, high-pressure systems, supercritical fluids |
+
+PR provides better liquid density predictions than SRK, particularly near the critical point. It is the default choice for most industrial hydrocarbon simulations.
+
+### NRTL (Non-Random Two-Liquid)
+
+Activity coefficient model for non-ideal liquid mixtures.
+
+| Aspect | Detail |
+|--------|--------|
+| Liquid phase | NRTL activity coefficients |
+| Vapor phase | Ideal gas (or PR for high pressure) |
+| Parameters | Binary interaction parameters (alpha, tau) |
+| Best for | Polar mixtures, alcohol-water systems, azeotropes |
+
+:::warning
+NRTL requires binary interaction parameters for each component pair. If parameters are unavailable for your system, the solver falls back to **Ideal**.
+:::
 
 ### UNIQUAC (Universal Quasi-Chemical)
 
-Activity coefficient model based on local composition theory.
+Activity coefficient model based on local composition theory with surface area and volume parameters.
 
 | Aspect | Detail |
 |--------|--------|
+| Liquid phase | UNIQUAC activity coefficients |
+| Vapor phase | Ideal gas (or PR for high pressure) |
 | Parameters | Binary interaction parameters, molecular r and q values |
-| Best for | Complex mixtures, polymer solutions, very different molecule sizes |
+| Best for | Complex mixtures, polymer solutions, systems with molecules of very different sizes |
+
+:::warning
+Falls back to **Ideal** if binary interaction parameters are not available for the selected component pair.
+:::
 
 ### eNRTL (Electrolyte NRTL)
 
-Extended NRTL model for ionic species.
+Extended NRTL model for systems containing ionic species.
 
 | Aspect | Detail |
 |--------|--------|
+| Liquid phase | eNRTL activity coefficients (ion-molecule, ion-ion interactions) |
+| Vapor phase | Ideal gas |
 | Parameters | Electrolyte binary interaction parameters |
-| Best for | Acid gas treating (CO2/H2S in amine), saline solutions |
+| Best for | Acid gas treating (CO2/H2S in amine), saline solutions, electrolyte systems |
+
+:::warning
+Falls back to **Ideal** if electrolyte interaction parameters are not available.
+:::
 
 ## Selection Guide
 
@@ -137,21 +179,26 @@ Extended NRTL model for ionic species.
 | Polymer solutions | Ideal | UNIQUAC |
 | Screening / debugging | Ideal | Ideal |
 
-## Implementation
+## How to Select
 
-The Quick mode engine uses a `PropertyPackage` interface:
+1. Open the editor toolbar above the flowsheet canvas.
+2. Click the **property method selector**.
+3. Choose a property package.
+4. Press **Run**.
 
-```typescript
-interface PropertyPackage {
-  calculateKValues(components, T, P): Record<string, number>;
-  flash(z, T, P, components): FlashResult;
-  liquidDensity(composition, T, P): number;
-  vaporDensity(composition, T, P): number;
-  mixtureEnthalpy(composition, T, P, phase?): number;
-  mixtureEntropy(composition, T, P, phase?): number;
-}
-```
+The property package applies globally to the entire flowsheet. All unit operations and streams use the same thermodynamic model.
 
-Factory: `getPropertyPackage('PR')` returns the appropriate implementation.
+:::info
+The property method selector is available in both **Quick** and **Rigorous** modes. Quick mode supports Ideal, PR, SRK, RK, and NRTL; Rigorous mode (DWSIM) additionally supports UNIQUAC, UNIFAC, IAPWS-IF97 steam, and DWSIM's electrolyte packages.
+:::
 
-Source: `src/sim/thermo/propertyMethod.ts`
+## Component database
+
+| Mode | Source | Count |
+|------|--------|-------|
+| Quick | Bundled in the TypeScript engine — NIST, DIPPR, Perry's, RPP | 70+ |
+| Rigorous | DWSIM compound database (resolved via CAS / name / formula) | ~500 |
+
+Each Quick-mode component includes: molecular weight, critical temperature, critical pressure, acentric factor, heat capacity coefficients, Antoine / Lee-Kesler vapor pressure coefficients, and (where available) NRTL binary interaction parameters.
+
+In Rigorous mode, Jasper components are resolved against DWSIM's database. Add a CAS number to each Jasper component for the most reliable resolution.

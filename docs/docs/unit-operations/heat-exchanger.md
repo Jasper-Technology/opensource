@@ -21,7 +21,7 @@ Specify one of `approachT`, `UA`, or `duty` — the remaining values are back-ca
 | Mode | Description |
 |------|-------------|
 | Quick | Energy balance with constant Cp — LMTD shortcut |
-| Rigorous | IDAES `HeatExchanger1D` or `HeatExchanger` model with full property evaluation on both sides |
+| Rigorous | DWSIM `Heat Exchanger` unit operation with full property-package evaluation on both sides |
 
 ## Ports
 

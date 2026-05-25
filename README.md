@@ -4,15 +4,15 @@ Open-source simulation infrastructure powering [Jasper](https://jaspertech.org) 
 
 ## Overview
 
-Jasper is built around **three complementary solver tiers**, so users can pick the right tradeoff between speed, rigor, and capability for any given flowsheet. This repository contains the source for all three engines: the in-browser Quick engine, the DWSIM-backed industrial engine, and the IDAES-backed equation-oriented engine.
+Jasper is built around **two simulation engines plus an agent-driven optimization layer**, so users can pick the right tradeoff between speed, rigor, and capability for any given flowsheet. This repository contains the source for all three: the in-browser Quick engine, the DWSIM-backed industrial engine, and the IDAES-backed optimization service that the Jasper agent invokes for NLP optimization.
 
 | Engine | Runs On | Best For | Typical Latency |
 |--------|---------|----------|-----------------|
 | **Quick** | Browser (TypeScript, no backend) | Teaching, fast iteration, textbook problems, sketching flowsheets | <100 ms |
 | **DWSIM** | Railway (C# / .NET wrapping [DWSIM](https://dwsim.org)) | Industrial flowsheets, rigorous VLE, recycle convergence, broad unit-op coverage | 2–30 s |
-| **IDAES** | Railway (Python / FastAPI wrapping [IDAES-PSE](https://idaes-pse.readthedocs.io)) | Equation-oriented modeling, optimization, custom unit models, techno-economic analysis | 5–60 s |
+| **IDAES** | Railway (Python / FastAPI wrapping [IDAES-PSE](https://idaes-pse.readthedocs.io)) | Equation-oriented optimization on top of either engine — invoked through the Jasper agent's `run_optimization` tool, not a separate engine toggle | 5–60 s |
 
-The Jasper frontend selects between engines per-project. Users can switch modes at any time; the same flowsheet schema is shared across all three.
+The frontend exposes Quick and DWSIM as engine toggles. IDAES is reached by asking the Jasper agent in chat (e.g. *"minimize H1 duty by varying its outlet temperature between 305 and 360 K"*); the agent translates the natural-language request into a Pyomo NLP and renders the result inline.
 
 ---
 
@@ -27,10 +27,9 @@ Five property methods, selectable per-project:
 |--------|----------|---------------|
 | **Ideal** | Ideal mixtures, low pressure | Raoult's Law |
 | **Peng-Robinson** | Hydrocarbons, gases, high pressure | Fugacity (phi-phi) |
-| **NRTL** | Polar / non-ideal liquids (ethanol-water, amines) | Activity coefficients (gamma-phi) |
 | **SRK** | Hydrocarbon screening and gas processing | Fugacity (phi-phi) |
 | **RK** | Legacy cubic-EOS screening | Fugacity (phi-phi) |
-| **NRTL** | Polar/non-ideal liquids (ethanol-water, amines) | Activity coefficients (gamma-phi) |
+| **NRTL** | Polar / non-ideal liquids (ethanol-water, amines) | Activity coefficients (gamma-phi) |
 
 Property calculations include:
 - **Lee-Kesler** vapor pressure (1–3% error, boiling-point anchored)
@@ -122,12 +121,16 @@ Or build the container directly with the included `Dockerfile` / `railway.toml`.
 
 ## 3. IDAES Mode (`backends/idaes/`)
 
-A Python / FastAPI service wrapping [IDAES-PSE](https://idaes-pse.readthedocs.io) and Pyomo. Used in Jasper for equation-oriented modeling, optimization problems, custom unit models, and techno-economic analysis (TEA) workflows that the sequential-modular engines can't express naturally.
+A Python / FastAPI service wrapping [IDAES-PSE](https://idaes-pse.readthedocs.io) and Pyomo. Used in Jasper for equation-oriented optimization, custom unit models, and techno-economic analysis (TEA) workflows that sequential-modular engines can't express naturally. **Invoked through the Jasper agent's `run_optimization` tool, not via a separate engine toggle in the frontend.**
 
 ### How Jasper uses it
 
 - **Simulation** (`app/api/routes/simulate.py`) — solves IDAES flowsheets built from Jasper's project schema using the helpers in `app/idaes_wrapper/` and `app/units/`.
-- **Optimization** (`app/api/routes/optimize.py`) — exposes Pyomo objectives + constraints over the flowsheet.
+- **Optimization** (`app/api/routes/optimize.py`) — exposes Pyomo objectives + constraints over the flowsheet. The agent's `run_optimization` tool hits this route. Two objective shapes are accepted:
+    - **Per-variable**: `{unit_id, parameter, sense}` — e.g. minimize a specific unit's `duty` or a stream temperature. Preferred for unit-level asks.
+    - **Named metric**: `{metric, sense}` where `metric ∈ {"total_duty","total_work","COM","total_cost"}` — whole-flowsheet objectives.
+
+    Frontend parameter names (`T`, `P`, `duty`, `dP`, `work`, `flow`, `outletT`, `outletP`) are accepted directly; `PARAM_ALIASES` in `core/model_builder.py` maps them to internal IDAES attribute paths per unit type. The route initializes the model first (with decision variables still fixed at their default spec values) and only unfixes / applies bounds afterwards — this gives IPOPT a feasible starting point and avoids `trivially infeasible` errors.
 - **Properties** (`app/api/routes/properties.py`) — pure-component and mixture property lookups backed by the registry in `app/components_registry/`.
 - **TEA** (`app/api/routes/tea.py`, `app/tea/`) — capital cost, operating cost, and ESG estimates derived from converged simulation results.
 - **Import** (`app/api/routes/import_.py`, `app/import_/`) — parses Aspen `.inp` / `.rep` files, Excel sheets, and other external formats into Jasper's schema.
@@ -145,7 +148,7 @@ cp .env.example .env   # set CORS_ORIGINS at minimum
 ./run-local.sh         # or: uvicorn app.main:app --reload
 ```
 
-Requirements pinned in `requirements.txt` (FastAPI, IDAES-PSE ≥ 2.4, Pydantic 2, Pint, openpyxl, etc.).
+Requirements pinned in `requirements.txt` (FastAPI, **IDAES-PSE == 2.11.0**, Pydantic 2, Pint, openpyxl, etc.).
 
 ---
 
@@ -245,6 +248,7 @@ Contributions are welcome! Please see our [contribution guidelines](CONTRIBUTING
 - ~~Kremser absorber / stripper~~
 - ~~DWSIM service with queued simulate / poll API~~
 - ~~IDAES service with simulate / optimize / properties / TEA routes~~
+- ~~IDAES 2.11.0 pin + agent-driven `run_optimization` integration (per-variable + named-metric objectives, PARAM_ALIASES, init-before-unfix)~~
 
 ---
 
