@@ -1,0 +1,622 @@
+{
+  "_about": "HDA-slice seed (Stage A). Git-versioned source of truth; loaded by cost-db/load.py. Every row carries a source + basis_date. Turton conventional units (turton_log10) + one SSLW fired heater (sslw_ln) to exercise both functional forms. Coefficients are verbatim from the cited sources; prices/index are flagged 'estimated' and gap-logged (see docs/cost-db/gaps.md) for reconciliation in A4/B3/B5.",
+  "sources": [
+    {
+      "slug": "turton",
+      "title": "Turton module-costing coefficients (conventional equipment)",
+      "source_type": "textbook_via_oss",
+      "license": "Turton 4th ed. coefficients; via MIT-licensed open-source port",
+      "url": null,
+      "reference_citation": "Turton et al., Analysis, Synthesis and Design of Chemical Processes, 4th ed., App. A.",
+      "accessed_on": "2026-06-05",
+      "notes": "Purchased-cost log10 polynomial + bare-module (B1,B2) / F_bare. Energy-transition entries from the same catalog are NOT used (unsourced \u2014 gaps.md G1)."
+    },
+    {
+      "slug": "idaes-sslw",
+      "title": "IDAES SSLW capital costing (fired heater)",
+      "source_type": "open_source_code",
+      "license": "IDAES BSD-3 (DOE/LBNL/Sandia/CMU/WVU)",
+      "url": "https://github.com/IDAES/idaes-pse",
+      "reference_citation": "Seider, Seader, Lewin, Widagdo, Product & Process Design Principles, 3rd ed., Ch. 22; idaes/models/costing/SSLW.py (idaes-pse 2.11.0).",
+      "accessed_on": "2026-06-05",
+      "notes": "exp(a1 + a2 ln S + a3 ln^2 S) at CE/CEPCI index 500. capital = Fm*Fp*base (purchased-with-factors, no Turton bare-module multiplier)."
+    },
+    {
+      "slug": "turton-grassroots-contingency",
+      "title": "Turton grassroots contingency recommendation",
+      "source_type": "textbook_via_oss",
+      "license": "concept (Turton 4th ed.)",
+      "reference_citation": "Turton et al. 4th ed.: 15-18% contingency for grassroots Class-4/5 estimates.",
+      "accessed_on": "2026-06-05",
+      "notes": null
+    }
+  ],
+  "chemicals": [
+    {
+      "cas_number": "108-88-3",
+      "name": "Toluene",
+      "formula": "C7H8",
+      "component_db_id": "toluene",
+      "source": "turton",
+      "basis_date": "2026-06-05"
+    },
+    {
+      "cas_number": "71-43-2",
+      "name": "Benzene",
+      "formula": "C6H6",
+      "component_db_id": "benzene",
+      "source": "turton",
+      "basis_date": "2026-06-05"
+    },
+    {
+      "cas_number": "1333-74-0",
+      "name": "Hydrogen",
+      "formula": "H2",
+      "component_db_id": "hydrogen",
+      "source": "turton",
+      "basis_date": "2026-06-05"
+    },
+    {
+      "cas_number": "74-82-8",
+      "name": "Methane",
+      "formula": "CH4",
+      "component_db_id": "methane",
+      "source": "turton",
+      "basis_date": "2026-06-05"
+    }
+  ],
+  "equipment_correlations": [
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Compressor",
+      "subtype": "Centrifugal",
+      "functional_form": "turton_log10",
+      "size_quantity": "power",
+      "size_unit": "kW",
+      "size_min": 450.0,
+      "size_max": 3000.0,
+      "coeff": {
+        "K": [
+          2.2897,
+          1.3604,
+          -0.1027
+        ]
+      },
+      "currency": "USD",
+      "base_index_name": "CEPCI",
+      "base_index_value": 397,
+      "base_index_year": 2001,
+      "bare_module": {
+        "B1": 0.0,
+        "B2": 1.0
+      },
+      "pressure_model": {
+        "unit": "barg",
+        "ranges": [
+          {
+            "bounds": [
+              null,
+              1000000000
+            ],
+            "C": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "notes": "Turton App A. Compressor uses material-dependent F_BM (B1=0,B2=1 -> C_BM = Cp*Fm)."
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "HeatExchanger",
+      "subtype": "FloatingHead",
+      "functional_form": "turton_log10",
+      "size_quantity": "area",
+      "size_unit": "m2",
+      "size_min": 10.0,
+      "size_max": 1000.0,
+      "coeff": {
+        "K": [
+          4.8306,
+          -0.8509,
+          0.3187
+        ]
+      },
+      "currency": "USD",
+      "base_index_name": "CEPCI",
+      "base_index_value": 397,
+      "base_index_year": 2001,
+      "bare_module": {
+        "B1": 1.63,
+        "B2": 1.66
+      },
+      "pressure_model": {
+        "unit": "barg",
+        "ranges": [
+          {
+            "bounds": [
+              null,
+              5
+            ],
+            "C": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "bounds": [
+              5,
+              140
+            ],
+            "C": [
+              0.03881,
+              -0.11272,
+              0.08183
+            ]
+          }
+        ]
+      },
+      "notes": "Shell-and-tube floating head. Turton App A."
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Vessel",
+      "subtype": "Vertical",
+      "functional_form": "turton_log10",
+      "size_quantity": "volume",
+      "size_unit": "m3",
+      "size_min": 0.3,
+      "size_max": 520.0,
+      "coeff": {
+        "K": [
+          3.4974,
+          0.4485,
+          0.1074
+        ]
+      },
+      "currency": "USD",
+      "base_index_name": "CEPCI",
+      "base_index_value": 397,
+      "base_index_year": 2001,
+      "bare_module": {
+        "B1": 2.25,
+        "B2": 1.82
+      },
+      "pressure_model": {
+        "unit": "barg",
+        "ranges": [
+          {
+            "bounds": [
+              null,
+              1000000000
+            ],
+            "C": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "notes": "Process/flash/column vessel (vertical). Turton App A."
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Vessel",
+      "subtype": "Horizontal",
+      "functional_form": "turton_log10",
+      "size_quantity": "volume",
+      "size_unit": "m3",
+      "size_min": 0.1,
+      "size_max": 628.0,
+      "coeff": {
+        "K": [
+          3.5565,
+          0.3776,
+          0.0905
+        ]
+      },
+      "currency": "USD",
+      "base_index_name": "CEPCI",
+      "base_index_value": 397,
+      "base_index_year": 2001,
+      "bare_module": {
+        "B1": 1.49,
+        "B2": 1.52
+      },
+      "pressure_model": {
+        "unit": "barg",
+        "ranges": [
+          {
+            "bounds": [
+              null,
+              1000000000
+            ],
+            "C": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "notes": "Horizontal vessel (e.g. reflux drum). Turton App A."
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Pump",
+      "subtype": "Centrifugal",
+      "functional_form": "turton_log10",
+      "size_quantity": "power",
+      "size_unit": "kW",
+      "size_min": 1.0,
+      "size_max": 300.0,
+      "coeff": {
+        "K": [
+          3.3892,
+          0.0536,
+          0.1538
+        ]
+      },
+      "currency": "USD",
+      "base_index_name": "CEPCI",
+      "base_index_value": 397,
+      "base_index_year": 2001,
+      "bare_module": {
+        "B1": 1.89,
+        "B2": 1.35
+      },
+      "pressure_model": {
+        "unit": "barg",
+        "ranges": [
+          {
+            "bounds": [
+              null,
+              10
+            ],
+            "C": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "bounds": [
+              10,
+              100
+            ],
+            "C": [
+              0.1347,
+              -0.2368,
+              0.1021
+            ]
+          }
+        ]
+      },
+      "notes": "Centrifugal pump (shaft power). Turton App A."
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Reactor",
+      "subtype": "JacketedAgitated",
+      "functional_form": "turton_log10",
+      "size_quantity": "volume",
+      "size_unit": "m3",
+      "size_min": 0.1,
+      "size_max": 35.0,
+      "coeff": {
+        "K": [
+          4.1052,
+          0.532,
+          -0.0005
+        ]
+      },
+      "currency": "USD",
+      "base_index_name": "CEPCI",
+      "base_index_value": 397,
+      "base_index_year": 2001,
+      "bare_module": {
+        "F_bare": 4.0
+      },
+      "pressure_model": {
+        "unit": "barg",
+        "ranges": [
+          {
+            "bounds": [
+              null,
+              1000000000
+            ],
+            "C": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "notes": "Single-factor F_bare (Turton reactors). HDA reactor is often costed as a pressure vessel; provided for coverage."
+    },
+    {
+      "source": "idaes-sslw",
+      "basis_date": "2006-01-01",
+      "equipment_type": "FiredHeater",
+      "subtype": "Fuel",
+      "functional_form": "sslw_ln",
+      "size_quantity": "heat_duty",
+      "size_unit": "BTU/hr",
+      "size_min": null,
+      "size_max": null,
+      "coeff": {
+        "alpha": [
+          0.32325,
+          0.766,
+          0.0
+        ]
+      },
+      "currency": "USD",
+      "base_index_name": "CEPCI",
+      "base_index_value": 500,
+      "base_index_year": 2006,
+      "bare_module": null,
+      "pressure_model": {
+        "form": "sslw_quadratic_ratio",
+        "unit": "psig",
+        "ref": 500.0,
+        "coeff": [
+          0.986,
+          -0.0035,
+          0.0175
+        ]
+      },
+      "notes": "SSLW cost_fired_heater (Fuel): base = exp(0.32325 + 0.766*ln(Q[BTU/hr])); capital = Fm*Fp*base. CE/CEPCI index 500 (~2006). Not in Turton catalog -> sourced from SSLW to exercise sslw_ln form."
+    }
+  ],
+  "material_factors": [
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Compressor",
+      "subtype": "Centrifugal",
+      "material": "CarbonSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 2.78
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Compressor",
+      "subtype": "Centrifugal",
+      "material": "StainlessSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 5.77
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Compressor",
+      "subtype": "Centrifugal",
+      "material": "NiAlloy",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 11.49
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "HeatExchanger",
+      "subtype": "FloatingHead",
+      "material": "CarbonSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 1.0
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "HeatExchanger",
+      "subtype": "FloatingHead",
+      "material": "StainlessSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 2.74
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "HeatExchanger",
+      "subtype": "FloatingHead",
+      "material": "NiAlloy",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 3.74
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "HeatExchanger",
+      "subtype": "FloatingHead",
+      "material": "Titanium",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 11.4
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Vessel",
+      "subtype": "Vertical",
+      "material": "CarbonSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 1.0
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Vessel",
+      "subtype": "Vertical",
+      "material": "StainlessSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 3.12
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Vessel",
+      "subtype": "Vertical",
+      "material": "NiAlloy",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 7.09
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Vessel",
+      "subtype": "Horizontal",
+      "material": "CarbonSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 1.0
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Vessel",
+      "subtype": "Horizontal",
+      "material": "StainlessSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 3.12
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Pump",
+      "subtype": "Centrifugal",
+      "material": "CastIron",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 1.0
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Pump",
+      "subtype": "Centrifugal",
+      "material": "CarbonSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 1.54
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Pump",
+      "subtype": "Centrifugal",
+      "material": "StainlessSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 2.31
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Reactor",
+      "subtype": "JacketedAgitated",
+      "material": "CarbonSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 1.0
+      }
+    },
+    {
+      "source": "turton",
+      "basis_date": "2001-01-01",
+      "equipment_type": "Reactor",
+      "subtype": "JacketedAgitated",
+      "material": "StainlessSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 3.12
+      }
+    },
+    {
+      "source": "idaes-sslw",
+      "basis_date": "2006-01-01",
+      "equipment_type": "FiredHeater",
+      "subtype": "Fuel",
+      "material": "CarbonSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 1.0
+      }
+    },
+    {
+      "source": "idaes-sslw",
+      "basis_date": "2006-01-01",
+      "equipment_type": "FiredHeater",
+      "subtype": "Fuel",
+      "material": "CrMoSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 1.4
+      }
+    },
+    {
+      "source": "idaes-sslw",
+      "basis_date": "2006-01-01",
+      "equipment_type": "FiredHeater",
+      "subtype": "Fuel",
+      "material": "StainlessSteel",
+      "factor_model": {
+        "kind": "scalar",
+        "value": 1.7
+      }
+    }
+  ],
+  "economic_factors": [
+    {
+      "source": "turton-grassroots-contingency",
+      "basis_date": "2026-06-05",
+      "factor_type": "contingency",
+      "aace_class": 5,
+      "value": 0.18,
+      "unit": "fraction",
+      "region": null,
+      "notes": "Turton grassroots 15-18%; using 18% for Class-4/5."
+    }
+  ],
+  "cost_index": [],
+  "_cost_index_note": "Retired the CEPCI-placeholder (G2 resolved). The real escalation index (index_name='jasper') is built from BLS data by cost-db/build_index.py into jasper_cost_index.json.",
+  "_prices_note": "Real chemical/utility prices moved to prices.json (B5). estimated-placeholder source retired.",
+  "chemical_prices": [],
+  "utilities": []
+}

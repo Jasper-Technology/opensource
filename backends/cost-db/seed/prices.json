@@ -1,0 +1,20 @@
+{
+  "_about": "B5 prices (static, sourced). Utilities from EIA public data; steam is a two-factor model (capital + fuel-coupled energy) so it responds to natural-gas price. Chemicals from TEA literature (representative US-GC; exact contract prices need a feed — G3). Live scheduled refresh is the deferred future plan.",
+
+  "sources": [
+    {"slug": "eia-public", "title": "US EIA energy prices (electricity, natural gas)", "source_type": "public_dataset", "license": "US Government public domain", "url": "https://www.eia.gov/", "reference_citation": "U.S. Energy Information Administration: industrial electricity and natural gas prices (2024 averages).", "accessed_on": "2026-06-06", "notes": "Real public energy prices. Steam derived via two-factor model."},
+    {"slug": "literature-prices", "title": "TEA-literature chemical reference prices", "source_type": "textbook_via_oss", "license": "representative (published TEA)", "reference_citation": "Representative US-GC commodity prices from published techno-economic analyses; refine with a price feed (G3).", "accessed_on": "2026-06-06", "notes": "Approximate; chemicals lack free citable spot feeds — gap-logged G3."}
+  ],
+
+  "utilities": [
+    {"source": "eia-public", "basis_date": "2024-01-01", "utility_type": "electricity",  "price": 0.083, "currency": "USD", "price_unit": "USD/kWh", "region": "US-GC", "two_factor": null, "fuel_chemical_cas": null, "notes": "EIA industrial avg ~2024."},
+    {"source": "eia-public", "basis_date": "2024-01-01", "utility_type": "natural_gas",  "price": 4.00,  "currency": "USD", "price_unit": "USD/GJ",  "region": "US-GC", "two_factor": null, "fuel_chemical_cas": "74-82-8", "notes": "EIA industrial natural gas ~2024 (~$4.2/MMBtu). Fuel for two-factor steam."},
+    {"source": "eia-public", "basis_date": "2024-01-01", "utility_type": "steam_lp",     "price": 6.50,  "currency": "USD", "price_unit": "USD/GJ",  "region": "US-GC", "two_factor": {"capital": 1.5, "energy_coeff": 1.25, "fuel": "natural_gas"}, "fuel_chemical_cas": "74-82-8", "notes": "Two-factor: price = 1.5 (capital) + 1.25 (1/boiler-eff) * natural_gas. Recomputes on fuel-price change. price field is the nominal fallback."}
+  ],
+
+  "chemical_prices": [
+    {"source": "literature-prices", "basis_date": "2024-01-01", "chemical_cas": "108-88-3",  "price": 1.00, "currency": "USD", "price_unit": "USD/kg", "region": "US-GC", "price_type": "market", "as_of_date": "2024-01-01", "notes": "Toluene, representative US-GC (G3)."},
+    {"source": "literature-prices", "basis_date": "2024-01-01", "chemical_cas": "71-43-2",   "price": 1.10, "currency": "USD", "price_unit": "USD/kg", "region": "US-GC", "price_type": "market", "as_of_date": "2024-01-01", "notes": "Benzene, representative US-GC (G3)."},
+    {"source": "literature-prices", "basis_date": "2024-01-01", "chemical_cas": "1333-74-0", "price": 2.00, "currency": "USD", "price_unit": "USD/kg", "region": "US-GC", "price_type": "market", "as_of_date": "2024-01-01", "notes": "Hydrogen (grey), representative US-GC (G3)."}
+  ]
+}

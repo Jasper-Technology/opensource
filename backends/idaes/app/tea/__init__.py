@@ -1,70 +1,12 @@
 """
-Jasper TEA engine — Turton module-costing, ported from GilvanNYU/TEA.
+Jasper TEA cost database.
 
-The heavy math lives in ``costing.py`` (pure functions, no state). Coefficient
-data lives in ``catalog.py`` (loads ``railway/tea-catalog.json``). Higher-level
-NPV / IRR / cash-flow math will land in ``economics.py`` (forthcoming).
+Provenance-first cost data (equipment correlations, factors, prices, index,
+overrides) served from Postgres. Repo is the source of truth for seed defaults;
+the DB is the serving layer. See docs/cost-db/ for the build plan and guardrails.
+
+Guardrails enforced at the DB layer (see models.py + the initial migration):
+  - every fact row references a `source` and carries a `basis_date` (NOT NULL)
+  - units are validated against an allowlist (FK to `units`), never implied
+  - the `overrides` table is append-only (UPDATE/DELETE blocked by trigger)
 """
-from .catalog import Catalog, load_catalog, get_catalog
-from .costing import (
-    purchased_cost,
-    bare_module_cost,
-    total_module_cost,
-    pressure_factor,
-    CostResult,
-    CostingError,
-    SizeOutOfRangeWarning,
-)
-from .sizing import (
-    Stream,
-    BlockInput,
-    SizingResult,
-    SizingDefaults,
-    DEFAULTS,
-    size,
-    cost_ready,
-    lmtd,
-    heat_exchanger_area,
-)
-from .economics import (
-    npv,
-    irr,
-    payback_period,
-    annualized_capex,
-    tac,
-    lcop,
-    LCOPInputs,
-    SimpleProject,
-    EconomicsError,
-)
-
-__all__ = [
-    "Catalog",
-    "load_catalog",
-    "get_catalog",
-    "purchased_cost",
-    "bare_module_cost",
-    "total_module_cost",
-    "pressure_factor",
-    "CostResult",
-    "CostingError",
-    "SizeOutOfRangeWarning",
-    "Stream",
-    "BlockInput",
-    "SizingResult",
-    "SizingDefaults",
-    "DEFAULTS",
-    "size",
-    "cost_ready",
-    "lmtd",
-    "heat_exchanger_area",
-    "npv",
-    "irr",
-    "payback_period",
-    "annualized_capex",
-    "tac",
-    "lcop",
-    "LCOPInputs",
-    "SimpleProject",
-    "EconomicsError",
-]

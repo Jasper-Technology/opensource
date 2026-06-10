@@ -1,0 +1,40 @@
+{
+  "_about": "B4: location drivers (composed, not country constants), contingency by AACE class, documented economic defaults, and material-matrix fill-ins. Merged by load.py.",
+
+  "sources": [
+    {"slug": "jasper-base", "title": "Base region definition (US Gulf Coast)", "source_type": "open_source_code", "license": "internal (Jasper)", "reference_citation": "US-GC is the cost basis; all location drivers = 1.0 by definition.", "accessed_on": "2026-06-06", "notes": "Definitional base, not measured data."},
+    {"slug": "location-us-mw", "title": "US Midwest location drivers (representative)", "source_type": "estimated", "license": "n/a", "reference_citation": "Representative differentials vs US-GC; labor from BLS regional construction wages (exact fetch pending — gaps G-loc).", "accessed_on": "2026-06-06", "notes": "Driver VALUES are representative/estimated; the composed-driver MODEL is the deliverable. Refine values from BLS state/regional wage data."},
+    {"slug": "us-irs-statutory", "title": "US federal statutory corporate tax rate", "source_type": "public_dataset", "license": "US Government public domain", "reference_citation": "US Internal Revenue Code §11: 21% federal corporate income tax.", "accessed_on": "2026-06-06", "notes": null},
+    {"slug": "jasper-econ-defaults", "title": "Documented economic defaults", "source_type": "estimated", "license": "n/a", "reference_citation": "Common TEA defaults (Turton-style): grassroots discount rate ~10%.", "accessed_on": "2026-06-06", "notes": "Documented defaults; users override per project."}
+  ],
+
+  "location_drivers": [
+    {"source": "jasper-base", "basis_date": "2026-06-06", "region": "US-GC", "driver_type": "labor_rate",     "value": 1.00, "unit": "dimensionless", "notes": "Base = 1.0 by definition."},
+    {"source": "jasper-base", "basis_date": "2026-06-06", "region": "US-GC", "driver_type": "productivity",   "value": 1.00, "unit": "dimensionless", "notes": "Base."},
+    {"source": "jasper-base", "basis_date": "2026-06-06", "region": "US-GC", "driver_type": "material_index", "value": 1.00, "unit": "dimensionless", "notes": "Base."},
+    {"source": "jasper-base", "basis_date": "2026-06-06", "region": "US-GC", "driver_type": "fx",             "value": 1.00, "unit": "dimensionless", "notes": "USD base."},
+    {"source": "jasper-base", "basis_date": "2026-06-06", "region": "US-GC", "driver_type": "freight_duty",   "value": 1.00, "unit": "dimensionless", "notes": "Base (multiplier >= 1)."},
+
+    {"source": "location-us-mw", "basis_date": "2026-06-06", "region": "US-MW", "driver_type": "labor_rate",     "value": 1.05, "unit": "dimensionless", "notes": "Midwest construction wages slightly above Gulf Coast (representative)."},
+    {"source": "location-us-mw", "basis_date": "2026-06-06", "region": "US-MW", "driver_type": "productivity",   "value": 1.00, "unit": "dimensionless", "notes": "Representative parity."},
+    {"source": "location-us-mw", "basis_date": "2026-06-06", "region": "US-MW", "driver_type": "material_index", "value": 1.00, "unit": "dimensionless", "notes": "US national PPI basis."},
+    {"source": "location-us-mw", "basis_date": "2026-06-06", "region": "US-MW", "driver_type": "fx",             "value": 1.00, "unit": "dimensionless", "notes": "USD."},
+    {"source": "location-us-mw", "basis_date": "2026-06-06", "region": "US-MW", "driver_type": "freight_duty",   "value": 1.02, "unit": "dimensionless", "notes": "Inland freight surcharge vs Gulf Coast ports (representative)."}
+  ],
+
+  "economic_factors": [
+    {"source": "turton-grassroots-contingency", "basis_date": "2026-06-06", "factor_type": "contingency", "aace_class": 4, "value": 0.15, "unit": "fraction", "region": null, "notes": "AACE Class 4 (study estimate)."},
+    {"source": "turton-grassroots-contingency", "basis_date": "2026-06-06", "factor_type": "contingency", "aace_class": 3, "value": 0.10, "unit": "fraction", "region": null, "notes": "AACE Class 3 (budget authorization)."},
+    {"source": "us-irs-statutory",      "basis_date": "2026-06-06", "factor_type": "tax_rate",      "aace_class": null, "value": 0.21, "unit": "fraction", "region": "US", "notes": "US federal statutory corporate rate (excl. state)."},
+    {"source": "jasper-econ-defaults",  "basis_date": "2026-06-06", "factor_type": "discount_rate", "aace_class": null, "value": 0.10, "unit": "fraction", "region": null, "notes": "Default grassroots discount rate; user-overridable."}
+  ],
+
+  "material_factors": [
+    {"source": "turton", "basis_date": "2001-01-01", "equipment_type": "Vessel", "subtype": "Vertical",   "material": "Titanium", "factor_model": {"kind": "scalar", "value": 9.43}},
+    {"source": "turton", "basis_date": "2001-01-01", "equipment_type": "Vessel", "subtype": "Horizontal", "material": "NiAlloy",  "factor_model": {"kind": "scalar", "value": 7.09}},
+    {"source": "turton", "basis_date": "2001-01-01", "equipment_type": "Vessel", "subtype": "Horizontal", "material": "Titanium", "factor_model": {"kind": "scalar", "value": 9.43}},
+    {"source": "turton", "basis_date": "2001-01-01", "equipment_type": "Pump",   "subtype": "Centrifugal", "material": "NiAlloy",  "factor_model": {"kind": "scalar", "value": 4.36}},
+    {"source": "turton", "basis_date": "2001-01-01", "equipment_type": "Reactor", "subtype": "JacketedAgitated", "material": "NiAlloy", "factor_model": {"kind": "scalar", "value": 7.09}},
+    {"source": "turton", "basis_date": "2001-01-01", "equipment_type": "HeatExchanger", "subtype": "FloatingHead", "material": "CS_SS", "factor_model": {"kind": "scalar", "value": 1.80}}
+  ]
+}

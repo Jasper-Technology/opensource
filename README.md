@@ -132,11 +132,11 @@ A Python / FastAPI service wrapping [IDAES-PSE](https://idaes-pse.readthedocs.io
 
     Frontend parameter names (`T`, `P`, `duty`, `dP`, `work`, `flow`, `outletT`, `outletP`) are accepted directly; `PARAM_ALIASES` in `core/model_builder.py` maps them to internal IDAES attribute paths per unit type. The route initializes the model first (with decision variables still fixed at their default spec values) and only unfixes / applies bounds afterwards — this gives IPOPT a feasible starting point and avoids `trivially infeasible` errors.
 - **Properties** (`app/api/routes/properties.py`) — pure-component and mixture property lookups backed by the registry in `app/components_registry/`.
-- **TEA** (`app/api/routes/tea.py`, `app/tea/`) — capital cost, operating cost, and ESG estimates derived from converged simulation results.
+- **TEA / Economics** (`app/api/routes/tea.py`, `app/tea/`) — provenance-tracked CAPEX + OPEX estimation backed by the open cost database in `backends/cost-db/` (sourced correlations, BLS-built cost index, location factors, append-only price overrides). AACE Class 4–5 accuracy, declared on every result. See the Economics section of the docs.
 - **Import** (`app/api/routes/import_.py`, `app/import_/`) — parses Aspen `.inp` / `.rep` files, Excel sheets, and other external formats into Jasper's schema.
 - **Components / Units** (`app/api/routes/components.py`, `app/api/routes/units.py`) — metadata endpoints the frontend uses to populate selectors.
 
-The TEA + import + units routes work without IDAES installed (useful for local dev). The heavy simulate/optimize/properties routes require the full IDAES + Pyomo + IPOPT stack and are loaded lazily — the service logs a warning and still serves the lighter endpoints when the heavy deps aren't present.
+The import + units routes work without IDAES installed (useful for local dev). The TEA cost routes mount when `DATABASE_URL` points at a seeded cost database (see `backends/cost-db/`); the service boots stateless without it. The heavy simulate/optimize/properties routes require the full IDAES + Pyomo + IPOPT stack and are loaded lazily — the service logs a warning and still serves the lighter endpoints when the heavy deps aren't present.
 
 Jobs are queued in-process (`app/core/simulation_queue.py`) with a periodic 10-minute sweep of completed/failed records to keep memory bounded on long-running Railway instances.
 
@@ -163,10 +163,12 @@ opensource/
 │       ├── solver/                   # Sequential modular solver
 │       ├── thermo/                   # PR, NRTL, Lee-Kesler, BIP DB, component DB
 │       ├── blocks/                   # Unit operation models
+│       ├── sizing/                   # Equipment sizing engine (engine-agnostic, post-convergence)
 │       ├── engine-v2.ts
-│       ├── sizing.ts                 # Equipment sizing correlations
-│       └── economics.ts              # Capital cost estimation
+│       ├── sizing.ts                 # Legacy sizing correlations (superseded by sizing/)
+│       └── economics.ts              # Legacy capital cost estimation (superseded by backends/cost-db)
 ├── backends/
+│   ├── cost-db/                      # Open cost database: sourced seeds, loader, BLS index builder
 │   ├── dwsim/                        # DWSIM mode (C# / .NET 8)
 │   │   ├── Program.cs                # ASP.NET minimal API + assembly resolver
 │   │   ├── Services/
@@ -178,13 +180,14 @@ opensource/
 │   │   ├── Dockerfile
 │   │   └── railway.toml
 │   └── idaes/                        # IDAES mode (Python / FastAPI)
+│       ├── alembic/                  # Cost DB schema migrations
 │       ├── app/
 │       │   ├── main.py               # FastAPI app + lifespan
 │       │   ├── api/routes/           # health, simulate, optimize, properties, tea, import_, components, units, jobs
 │       │   ├── idaes_wrapper/        # IDAES flowsheet builders
 │       │   ├── units/                # Unit-op + unit-of-measure helpers
 │       │   ├── components_registry/  # Pure-component database
-│       │   ├── tea/                  # Techno-economic analysis
+│       │   ├── tea/                  # Cost DB engine (schema, costing math, query API)
 │       │   ├── import_/              # Aspen / Excel importers
 │       │   ├── comprehend/           # Schema understanding helpers
 │       │   ├── core/                 # Job queue, settings
