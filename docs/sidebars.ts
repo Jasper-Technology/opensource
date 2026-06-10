@@ -50,6 +50,30 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Equipment Sizing',
+      collapsed: false,
+      items: [
+        'sizing/overview',
+        'sizing/methods',
+        'sizing/reactors',
+        'sizing/custom-sizing',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Economics',
+      collapsed: false,
+      items: [
+        'economics/overview',
+        'economics/cost-database',
+        'economics/costing-methods',
+        'economics/data-sources',
+        'economics/prices-and-overrides',
+        'economics/api',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Components',
       collapsed: true,
       items: ['components/database'],

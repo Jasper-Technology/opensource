@@ -1,0 +1,89 @@
+{
+  "_about": "B2 coverage seed. Adds the Turbine correlation (for Expander) and a unit_cost_map row for EVERY Jasper unit type (site/src/core/schema.ts UnitType). Merged with hda_slice.json by load.py. Cost-bearing units resolve to a license-clean Turton/SSLW correlation; connectors/non-physical units are cost_bearing=false. Rationale: docs/cost-db/investigation/03-coverage-map.md.",
+
+  "sources": [
+    {
+      "slug": "jasper-mapping",
+      "title": "Jasper unit-type -> correlation mapping (engineering decisions)",
+      "source_type": "open_source_code",
+      "license": "internal (Jasper)",
+      "reference_citation": "Mapping of site/src/core/schema.ts UnitType to Turton/SSLW correlations; rationale in docs/cost-db/investigation/03-coverage-map.md",
+      "accessed_on": "2026-06-06",
+      "notes": "Modeling decisions (which correlation costs which unit type), not measured data."
+    }
+  ],
+
+  "equipment_correlations": [
+    {
+      "source": "idaes-sslw", "basis_date": "2006-01-01",
+      "equipment_type": "Turbine", "subtype": "Standard",
+      "functional_form": "sslw_ln", "size_quantity": "power", "size_unit": "kW",
+      "size_min": null, "size_max": null,
+      "coeff": {"alpha": [6.510, 0.81, 0.0]},
+      "currency": "USD", "base_index_name": "CEPCI", "base_index_value": 500, "base_index_year": 2006,
+      "bare_module": null, "pressure_model": null,
+      "notes": "SSLW cost_turbine: capital = 530*(work_hp)^0.81 @ CE500. Converted to kW basis: 530/(0.7457^0.81)=672 -> alpha1=ln(672)=6.510. For Expander. Fm=1, no Fp."
+    },
+    {
+      "source": "idaes-sslw", "basis_date": "2006-01-01",
+      "equipment_type": "ColumnTrays", "subtype": "Standard",
+      "functional_form": "sslw_trays", "size_quantity": "stages", "size_unit": "dimensionless",
+      "size_min": null, "size_max": null,
+      "coeff": {
+        "tray_base": [468.0, 0.1739],
+        "number_factor": [2.25, 1.0414],
+        "type_factors": {"Sieve": 1.0, "Valve": 1.18, "BubbleCap": 1.87},
+        "material_factors": {
+          "CarbonSteel": [1.0, 0.0],
+          "StainlessSteel303": [1.189, 0.0577],
+          "StainlessSteel316": [1.401, 0.0724],
+          "Carpenter20CB3": [1.525, 0.0788],
+          "Monel": [2.306, 0.1120]
+        },
+        "install_factor": 1.4
+      },
+      "currency": "USD", "base_index_name": "CEPCI", "base_index_value": 500, "base_index_year": 2006,
+      "bare_module": null, "pressure_model": null,
+      "notes": "SSLW cost_distillation_trays. base_per_tray=468*exp(0.1739*D_ft); N_factor=max(1,2.25/1.0414^N); Ftm=a1+a2*D_ft; trays=N*N_factor*type*Ftm*base. Handled by costing.cost_trays (not compute_cost). install_factor 1.4 puts trays on the column bare-module basis."
+    }
+  ],
+
+  "material_factors": [
+    {"source": "idaes-sslw", "basis_date": "2006-01-01", "equipment_type": "Turbine", "subtype": "Standard", "material": "CarbonSteel", "factor_model": {"kind": "scalar", "value": 1.0}}
+  ],
+
+  "unit_cost_map": [
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Flash",                "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Vertical",         "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Flash drum as vertical pressure vessel."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Pump",                 "cost_bearing": true,  "equipment_type": "Pump",          "default_subtype": "Centrifugal",      "default_material": "CastIron",    "sizing_basis": "power",     "notes": null},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Compressor",           "cost_bearing": true,  "equipment_type": "Compressor",    "default_subtype": "Centrifugal",      "default_material": "CarbonSteel", "sizing_basis": "power",     "notes": null},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Expander",             "cost_bearing": true,  "equipment_type": "Turbine",       "default_subtype": "Standard",         "default_material": "CarbonSteel", "sizing_basis": "power",     "notes": "Gas expander as turbine (SSLW)."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Heater",               "cost_bearing": true,  "equipment_type": "FiredHeater",   "default_subtype": "Fuel",             "default_material": "CarbonSteel", "sizing_basis": "heat_duty", "notes": "Process heater as fired heater (SSLW). Overestimates small electric heaters; refine per-duty later."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Cooler",               "cost_bearing": true,  "equipment_type": "HeatExchanger", "default_subtype": "FloatingHead",     "default_material": "CarbonSteel", "sizing_basis": "area",      "notes": "Cooler as shell-and-tube exchanger."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "HeatExchanger",        "cost_bearing": true,  "equipment_type": "HeatExchanger", "default_subtype": "FloatingHead",     "default_material": "CarbonSteel", "sizing_basis": "area",      "notes": null},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Absorber",             "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Vertical",         "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Column shell. Internals (trays/packing) added in a later pass."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Stripper",             "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Vertical",         "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Column shell."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "DistillationColumn",   "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Vertical",         "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Column shell. Tray/packing internals: later pass."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "ShortcutDistillation", "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Vertical",         "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Column shell."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "ReactiveDistillation", "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Vertical",         "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Column shell."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Reactor",              "cost_bearing": true,  "equipment_type": "Reactor",       "default_subtype": "JacketedAgitated", "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Legacy generic reactor."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "RCSTR",                "cost_bearing": true,  "equipment_type": "Reactor",       "default_subtype": "JacketedAgitated", "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "CSTR as jacketed agitated reactor."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "RPfr",                 "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Horizontal",       "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "PFR as horizontal vessel."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "RBatch",               "cost_bearing": true,  "equipment_type": "Reactor",       "default_subtype": "JacketedAgitated", "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Batch reactor as jacketed agitated reactor."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "RStoic",               "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Vertical",         "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Stoichiometric reactor as pressure vessel."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "RYield",               "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Vertical",         "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Yield reactor as pressure vessel."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "REquil",               "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Vertical",         "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Equilibrium reactor as pressure vessel."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "RGibbs",               "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Vertical",         "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Gibbs reactor as pressure vessel."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Separator",            "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Vertical",         "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "Separator vessel."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "ThreePhaseSeparator",  "cost_bearing": true,  "equipment_type": "Vessel",        "default_subtype": "Horizontal",       "default_material": "CarbonSteel", "sizing_basis": "volume",    "notes": "3-phase separator as horizontal vessel."},
+
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "CustomUnit",           "cost_bearing": true,  "equipment_type": null,            "default_subtype": null,               "default_material": null,          "sizing_basis": null,        "notes": "Resolves via customSpec.baseType at cost time (repository.cost_unit base_type arg)."},
+
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Feed",                 "cost_bearing": false, "equipment_type": null, "default_subtype": null, "default_material": null, "sizing_basis": null, "notes": "Stream source; no equipment."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Sink",                 "cost_bearing": false, "equipment_type": null, "default_subtype": null, "default_material": null, "sizing_basis": null, "notes": "Stream sink; no equipment."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Mixer",                "cost_bearing": false, "equipment_type": null, "default_subtype": null, "default_material": null, "sizing_basis": null, "notes": "Inline mixing typically negligible; cost as agitated vessel only if standalone (later)."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Splitter",             "cost_bearing": false, "equipment_type": null, "default_subtype": null, "default_material": null, "sizing_basis": null, "notes": "Tee; no equipment."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "Valve",                "cost_bearing": false, "equipment_type": null, "default_subtype": null, "default_material": null, "sizing_basis": null, "notes": "Control/throttle valve = instrument/piping cost, not standalone equipment."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "PipeSegment",          "cost_bearing": false, "equipment_type": null, "default_subtype": null, "default_material": null, "sizing_basis": null, "notes": "Piping = OSBL/factor, not an equipment correlation (G-pipe; addressed via factors in B4)."},
+    {"source": "jasper-mapping", "basis_date": "2026-06-06", "jasper_unit_type": "TextBox",              "cost_bearing": false, "equipment_type": null, "default_subtype": null, "default_material": null, "sizing_basis": null, "notes": "Annotation; non-physical."}
+  ]
+}

@@ -1,0 +1,1934 @@
+{
+ "$schema_version": "1",
+ "cepci_reference": 397,
+ "cepci_reference_year": 2001,
+ "notes": "Turton coefficients (4th ed., App. A) via an MIT-licensed open-source port. log10(Cp) = K1 + K2 log10(size) + K3 log10(size)^2 in USD at CEPCI=397. Material/pressure factors from Turton 4th ed.",
+ "equipment": {
+  "Pump": {
+   "size_quantity": "power",
+   "subtypes": {
+    "Centrifugal": {
+     "K": [
+      3.3892,
+      0.0536,
+      0.1538
+     ],
+     "size_unit": "kW",
+     "size_min": 1.0,
+     "size_max": 300.0,
+     "B1": 1.89,
+     "B2": 1.35,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        10
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "bounds": [
+        10,
+        100
+       ],
+       "C": [
+        0.1347,
+        -0.2368,
+        0.1021
+       ]
+      }
+     ]
+    },
+    "Reciprocating": {
+     "K": [
+      3.8696,
+      0.3161,
+      0.122
+     ],
+     "size_unit": "kW",
+     "size_min": 0.1,
+     "size_max": 200.0,
+     "B1": 1.89,
+     "B2": 1.35,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        10
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "bounds": [
+        10,
+        100
+       ],
+       "C": [
+        -0.3935,
+        0.3957,
+        -0.00226
+       ]
+      }
+     ]
+    },
+    "PositiveDisplacement": {
+     "K": [
+      3.4771,
+      0.135,
+      0.1438
+     ],
+     "size_unit": "kW",
+     "size_min": 1.0,
+     "size_max": 100.0,
+     "B1": 1.89,
+     "B2": 1.35,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        10
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "bounds": [
+        10,
+        100
+       ],
+       "C": [
+        -0.3935,
+        0.3957,
+        -0.00226
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CastIron": {
+     "Reciprocating": 1.0,
+     "PositiveDisplacement": 1.0,
+     "Centrifugal": 1.0
+    },
+    "CarbonSteel": {
+     "Reciprocating": 1.45,
+     "PositiveDisplacement": 1.42,
+     "Centrifugal": 1.54
+    },
+    "StainlessSteel": {
+     "Reciprocating": 2.35,
+     "PositiveDisplacement": 2.66,
+     "Centrifugal": 2.31
+    },
+    "NiAlloy": {
+     "Reciprocating": 3.96,
+     "PositiveDisplacement": 4.75,
+     "Centrifugal": 4.36
+    }
+   }
+  },
+  "Compressor": {
+   "size_quantity": "power",
+   "subtypes": {
+    "Centrifugal": {
+     "K": [
+      2.2897,
+      1.3604,
+      -0.1027
+     ],
+     "size_unit": "kW",
+     "size_min": 450.0,
+     "size_max": 3000.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Axial": {
+     "K": [
+      2.2897,
+      1.3604,
+      -0.1027
+     ],
+     "size_unit": "kW",
+     "size_min": 450.0,
+     "size_max": 3000.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Reciprocating": {
+     "K": [
+      2.2897,
+      1.3604,
+      -0.1027
+     ],
+     "size_unit": "kW",
+     "size_min": 450.0,
+     "size_max": 3000.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Rotary": {
+     "K": [
+      5.0355,
+      -1.8002,
+      0.8253
+     ],
+     "size_unit": "kW",
+     "size_min": 18.0,
+     "size_max": 950.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "Centrifugal": 2.78,
+     "Axial": 3.85,
+     "Reciprocating": 3.37,
+     "Rotary": 2.41
+    },
+    "StainlessSteel": {
+     "Centrifugal": 5.77,
+     "Axial": 8.03,
+     "Reciprocating": 7.01,
+     "Rotary": 5.07
+    },
+    "NiAlloy": {
+     "Centrifugal": 11.49,
+     "Axial": 16.0,
+     "Reciprocating": 13.92,
+     "Rotary": 9.9
+    }
+   }
+  },
+  "HeatExchanger": {
+   "size_quantity": "area",
+   "subtypes": {
+    "DoublePipe": {
+     "K": [
+      3.3444,
+      0.2745,
+      -0.0472
+     ],
+     "size_unit": "m2",
+     "size_min": 1.0,
+     "size_max": 10.0,
+     "B1": 1.74,
+     "B2": 1.55,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        40
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "bounds": [
+        40,
+        100
+       ],
+       "C": [
+        0.6072,
+        -0.912,
+        0.3327
+       ]
+      },
+      {
+       "bounds": [
+        100,
+        300
+       ],
+       "C": [
+        13.1467,
+        -12.6574,
+        3.0705
+       ]
+      }
+     ]
+    },
+    "FixedTube": {
+     "K": [
+      4.3247,
+      -0.303,
+      0.1634
+     ],
+     "size_unit": "m2",
+     "size_min": 10.0,
+     "size_max": 1000.0,
+     "B1": 1.63,
+     "B2": 1.66,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        5
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "bounds": [
+        5,
+        140
+       ],
+       "C": [
+        0.03881,
+        -0.11272,
+        0.08183
+       ]
+      }
+     ]
+    },
+    "FloatingHead": {
+     "K": [
+      4.8306,
+      -0.8509,
+      0.3187
+     ],
+     "size_unit": "m2",
+     "size_min": 10.0,
+     "size_max": 1000.0,
+     "B1": 1.63,
+     "B2": 1.66,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        5
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "bounds": [
+        5,
+        140
+       ],
+       "C": [
+        0.03881,
+        -0.11272,
+        0.08183
+       ]
+      }
+     ]
+    },
+    "UTube": {
+     "K": [
+      4.1884,
+      -0.2503,
+      0.1974
+     ],
+     "size_unit": "m2",
+     "size_min": 10.0,
+     "size_max": 1000.0,
+     "B1": 1.63,
+     "B2": 1.66,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        5
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "bounds": [
+        5,
+        140
+       ],
+       "C": [
+        0.03881,
+        -0.11272,
+        0.08183
+       ]
+      }
+     ]
+    },
+    "AirCooler": {
+     "K": [
+      4.0336,
+      0.2341,
+      0.0497
+     ],
+     "size_unit": "m2",
+     "size_min": 10.0,
+     "size_max": 10000.0,
+     "B1": 0.96,
+     "B2": 1.21,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        10
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "bounds": [
+        10,
+        100
+       ],
+       "C": [
+        -0.125,
+        0.15361,
+        -0.02861
+       ]
+      }
+     ]
+    },
+    "FlatPlate": {
+     "K": [
+      4.6656,
+      -0.1557,
+      0.1547
+     ],
+     "size_unit": "m2",
+     "size_min": 1.0,
+     "size_max": 1000.0,
+     "B1": 0.96,
+     "B2": 1.21,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        19
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "DoublePipe": 1.0,
+     "FixedTube": 1.0,
+     "FloatingHead": 1.0,
+     "UTube": 1.0,
+     "AirCooler": 1.0,
+     "FlatPlate": 1.0
+    },
+    "StainlessSteel": {
+     "DoublePipe": 2.74,
+     "FixedTube": 2.74,
+     "FloatingHead": 2.74,
+     "UTube": 2.74,
+     "AirCooler": 2.95,
+     "FlatPlate": 2.45
+    },
+    "NiAlloy": {
+     "DoublePipe": 3.74,
+     "FixedTube": 3.74,
+     "FloatingHead": 3.74,
+     "UTube": 3.74,
+     "AirCooler": 3.74,
+     "FlatPlate": 2.7
+    },
+    "Titanium": {
+     "DoublePipe": 11.4,
+     "FixedTube": 11.4,
+     "FloatingHead": 11.4,
+     "UTube": 11.4,
+     "AirCooler": 11.4,
+     "FlatPlate": 4.66
+    },
+    "CS_SS": {
+     "DoublePipe": 1.8,
+     "FixedTube": 1.8,
+     "FloatingHead": 1.8,
+     "UTube": 1.8,
+     "AirCooler": 1.1,
+     "FlatPlate": 2.2
+    }
+   }
+  },
+  "Vessel": {
+   "size_quantity": "volume",
+   "subtypes": {
+    "Horizontal": {
+     "K": [
+      3.5565,
+      0.3776,
+      0.0905
+     ],
+     "size_unit": "m3",
+     "size_min": 0.1,
+     "size_max": 628.0,
+     "B1": 1.49,
+     "B2": 1.52,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Vertical": {
+     "K": [
+      3.4974,
+      0.4485,
+      0.1074
+     ],
+     "size_unit": "m3",
+     "size_min": 0.3,
+     "size_max": 520.0,
+     "B1": 2.25,
+     "B2": 1.82,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "Horizontal": 1.0,
+     "Vertical": 1.0
+    },
+    "StainlessSteel": {
+     "Horizontal": 3.12,
+     "Vertical": 3.12
+    },
+    "NiAlloy": {
+     "Horizontal": 7.09,
+     "Vertical": 7.09
+    },
+    "Titanium": {
+     "Horizontal": 9.43,
+     "Vertical": 9.43
+    }
+   }
+  },
+  "Tank": {
+   "size_quantity": "volume",
+   "subtypes": {
+    "APIFixedRoof": {
+     "K": [
+      4.8509,
+      -0.3973,
+      0.1445
+     ],
+     "size_unit": "m3",
+     "size_min": 90.0,
+     "size_max": 30000.0,
+     "B1": 2.25,
+     "B2": 1.82,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "APIFloatingRoof": {
+     "K": [
+      5.9567,
+      -0.7585,
+      0.1749
+     ],
+     "size_unit": "m3",
+     "size_min": 1000.0,
+     "size_max": 40000.0,
+     "B1": 2.25,
+     "B2": 1.82,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "APIFixedRoof": 1.0,
+     "APIFloatingRoof": 1.0
+    },
+    "StainlessSteel": {
+     "APIFixedRoof": 3.12,
+     "APIFloatingRoof": 3.12
+    },
+    "NiAlloy": {
+     "APIFixedRoof": 7.09,
+     "APIFloatingRoof": 7.09
+    }
+   }
+  },
+  "Reactor": {
+   "size_quantity": "volume",
+   "subtypes": {
+    "JacketedAgitated": {
+     "K": [
+      4.1052,
+      0.532,
+      -0.0005
+     ],
+     "size_unit": "m3",
+     "size_min": 0.1,
+     "size_max": 35.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 4.0,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "JacketedNonagitated": {
+     "K": [
+      3.3496,
+      0.7235,
+      0.0025
+     ],
+     "size_unit": "m3",
+     "size_min": 5.0,
+     "size_max": 45.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 4.0,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Autoclave": {
+     "K": [
+      4.5587,
+      0.2986,
+      0.002
+     ],
+     "size_unit": "m3",
+     "size_min": 1.0,
+     "size_max": 15.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 4.0,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "JacketedAgitated": 1.0,
+     "JacketedNonagitated": 1.0,
+     "Autoclave": 1.0
+    },
+    "StainlessSteel": {
+     "JacketedAgitated": 3.12,
+     "JacketedNonagitated": 3.12,
+     "Autoclave": 3.12
+    },
+    "NiAlloy": {
+     "JacketedAgitated": 7.09,
+     "JacketedNonagitated": 7.09,
+     "Autoclave": 7.09
+    }
+   }
+  },
+  "Heater": {
+   "size_quantity": "power",
+   "subtypes": {
+    "SteamBoiler": {
+     "K": [
+      6.9617,
+      -1.48,
+      0.3161
+     ],
+     "size_unit": "kW",
+     "size_min": 1200.0,
+     "size_max": 9400.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 2.19,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Diphenyl": {
+     "K": [
+      2.2628,
+      0.8581,
+      0.0003
+     ],
+     "size_unit": "kW",
+     "size_min": 650.0,
+     "size_max": 10750.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 2.19,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "HotWater": {
+     "K": [
+      2.0829,
+      0.9074,
+      -0.0243
+     ],
+     "size_unit": "kW",
+     "size_min": 650.0,
+     "size_max": 10750.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 2.19,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "SteamBoiler": 1.0,
+     "Diphenyl": 1.0,
+     "HotWater": 1.0
+    },
+    "StainlessSteel": {
+     "SteamBoiler": 1.4,
+     "Diphenyl": 1.4,
+     "HotWater": 1.4
+    }
+   }
+  },
+  "Centrifuge": {
+   "size_quantity": "area",
+   "subtypes": {
+    "Apron": {
+     "K": [
+      3.9255,
+      0.5039,
+      0.1506
+     ],
+     "size_unit": "m2",
+     "size_min": 1.0,
+     "size_max": 15.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.2,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Belt": {
+     "K": [
+      4.0637,
+      0.2584,
+      0.155
+     ],
+     "size_unit": "m2",
+     "size_min": 0.5,
+     "size_max": 325.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.25,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Pneumatic": {
+     "K": [
+      4.6616,
+      0.3205,
+      0.0638
+     ],
+     "size_unit": "m2",
+     "size_min": 0.75,
+     "size_max": 65.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.25,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Screw": {
+     "K": [
+      3.6062,
+      0.2659,
+      0.1982
+     ],
+     "size_unit": "m2",
+     "size_min": 0.5,
+     "size_max": 30.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.1,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "Apron": 1.0,
+     "Belt": 1.0,
+     "Pneumatic": 1.0,
+     "Screw": 1.0
+    },
+    "StainlessSteel": {
+     "Apron": 1.5,
+     "Belt": 1.5,
+     "Pneumatic": 1.5,
+     "Screw": 1.5
+    }
+   }
+  },
+  "Filter": {
+   "size_quantity": "area",
+   "subtypes": {
+    "Drum": {
+     "K": [
+      4.8123,
+      0.2858,
+      0.042
+     ],
+     "size_unit": "m2",
+     "size_min": 0.9,
+     "size_max": 300.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.65,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Leaf": {
+     "K": [
+      3.8187,
+      0.6235,
+      0.0176
+     ],
+     "size_unit": "m2",
+     "size_min": 0.6,
+     "size_max": 235.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.65,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "PlateFrame": {
+     "K": [
+      4.2756,
+      0.352,
+      0.0714
+     ],
+     "size_unit": "m2",
+     "size_min": 0.5,
+     "size_max": 80.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.8,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Cartridge": {
+     "K": [
+      3.2107,
+      0.7597,
+      0.0027
+     ],
+     "size_unit": "m2",
+     "size_min": 15.0,
+     "size_max": 200.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.65,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "Drum": 1.0,
+     "Leaf": 1.0,
+     "PlateFrame": 1.0,
+     "Cartridge": 1.0
+    },
+    "StainlessSteel": {
+     "Drum": 1.5,
+     "Leaf": 1.5,
+     "PlateFrame": 1.5,
+     "Cartridge": 1.5
+    }
+   }
+  },
+  "Dryer": {
+   "size_quantity": "area",
+   "subtypes": {
+    "Drum": {
+     "K": [
+      4.5472,
+      0.2731,
+      0.134
+     ],
+     "size_unit": "m2",
+     "size_min": 0.5,
+     "size_max": 50.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.6,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Rotary": {
+     "K": [
+      3.5645,
+      1.1118,
+      -0.0777
+     ],
+     "size_unit": "m2",
+     "size_min": 5.0,
+     "size_max": 100.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.25,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Tray": {
+     "K": [
+      3.6951,
+      0.5442,
+      -0.1248
+     ],
+     "size_unit": "m2",
+     "size_min": 1.8,
+     "size_max": 20.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.25,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "Drum": 1.0,
+     "Rotary": 1.0,
+     "Tray": 1.0
+    },
+    "StainlessSteel": {
+     "Drum": 1.5,
+     "Rotary": 1.5,
+     "Tray": 1.5
+    }
+   }
+  },
+  "Evaporator": {
+   "size_quantity": "area",
+   "subtypes": {
+    "ForcedCirculation": {
+     "K": [
+      5.0238,
+      0.3475,
+      0.0703
+     ],
+     "size_unit": "m2",
+     "size_min": 5.0,
+     "size_max": 1000.0,
+     "B1": 1.89,
+     "B2": 1.35,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "FallingFilm": {
+     "K": [
+      3.9119,
+      0.8627,
+      -0.0088
+     ],
+     "size_unit": "m2",
+     "size_min": 50.0,
+     "size_max": 500.0,
+     "B1": 1.89,
+     "B2": 1.35,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "LongTube": {
+     "K": [
+      4.642,
+      0.3698,
+      0.0025
+     ],
+     "size_unit": "m2",
+     "size_min": 100.0,
+     "size_max": 10000.0,
+     "B1": 1.89,
+     "B2": 1.35,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "ForcedCirculation": 2.93,
+     "FallingFilm": 2.23,
+     "LongTube": 2.93
+    },
+    "StainlessSteel": {
+     "ForcedCirculation": 5.08,
+     "FallingFilm": 4.0,
+     "LongTube": 5.08
+    },
+    "NiAlloy": {
+     "ForcedCirculation": 9.68,
+     "FallingFilm": 7.56,
+     "LongTube": 9.68
+    }
+   }
+  },
+  "Electrolyzer": {
+   "size_quantity": "power",
+   "subtypes": {
+    "PEM": {
+     "K": [
+      4.0,
+      0.7,
+      0.05
+     ],
+     "size_unit": "kW",
+     "size_min": 10.0,
+     "size_max": 100000.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.35,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Alkaline": {
+     "K": [
+      3.85,
+      0.75,
+      0.03
+     ],
+     "size_unit": "kW",
+     "size_min": 100.0,
+     "size_max": 100000.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.3,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "SOEC": {
+     "K": [
+      4.15,
+      0.7,
+      0.03
+     ],
+     "size_unit": "kW",
+     "size_min": 50.0,
+     "size_max": 10000.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.5,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "Standard": {
+     "PEM": 1.0,
+     "Alkaline": 1.0,
+     "SOEC": 1.0
+    },
+    "HighSpec": {
+     "PEM": 1.5,
+     "Alkaline": 1.4,
+     "SOEC": 1.8
+    }
+   }
+  },
+  "Membrane": {
+   "size_quantity": "area",
+   "subtypes": {
+    "RO": {
+     "K": [
+      2.5,
+      0.7,
+      0.0
+     ],
+     "size_unit": "m2",
+     "size_min": 10.0,
+     "size_max": 50000.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.4,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "NF": {
+     "K": [
+      2.4,
+      0.7,
+      0.0
+     ],
+     "size_unit": "m2",
+     "size_min": 10.0,
+     "size_max": 20000.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.4,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "UF": {
+     "K": [
+      2.3,
+      0.7,
+      0.0
+     ],
+     "size_unit": "m2",
+     "size_min": 5.0,
+     "size_max": 10000.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.4,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "MF": {
+     "K": [
+      2.2,
+      0.7,
+      0.0
+     ],
+     "size_unit": "m2",
+     "size_min": 5.0,
+     "size_max": 10000.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.4,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "Polymer": {
+     "RO": 1.0,
+     "NF": 1.0,
+     "UF": 1.0,
+     "MF": 1.0
+    },
+    "Ceramic": {
+     "RO": 1.5,
+     "NF": 1.5,
+     "UF": 2.2,
+     "MF": 2.2
+    }
+   }
+  },
+  "PSA": {
+   "size_quantity": "volumetric_flow",
+   "subtypes": {
+    "Skid": {
+     "K": [
+      4.1,
+      0.8,
+      0.0
+     ],
+     "size_unit": "m3/s",
+     "size_min": 0.05,
+     "size_max": 50.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 2.5,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        40
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "bounds": [
+        40,
+        100
+       ],
+       "C": [
+        0.15,
+        -0.1,
+        0.05
+       ]
+      }
+     ]
+    },
+    "Modular": {
+     "K": [
+      3.95,
+      0.8,
+      0.0
+     ],
+     "size_unit": "m3/s",
+     "size_min": 0.05,
+     "size_max": 50.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 2.2,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        40
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "bounds": [
+        40,
+        100
+       ],
+       "C": [
+        0.15,
+        -0.1,
+        0.05
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "Skid": 1.0,
+     "Modular": 1.0
+    },
+    "StainlessSteel": {
+     "Skid": 1.7,
+     "Modular": 1.7
+    }
+   }
+  },
+  "Crystallizer": {
+   "size_quantity": "volume",
+   "subtypes": {
+    "Batch": {
+     "K": [
+      4.5097,
+      0.1731,
+      0.1344
+     ],
+     "size_unit": "m3",
+     "size_min": 1.5,
+     "size_max": 30.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.6,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "Continuous": {
+     "K": [
+      4.65,
+      0.24,
+      0.1
+     ],
+     "size_unit": "m3",
+     "size_min": 2.0,
+     "size_max": 100.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.8,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "Batch": 1.0,
+     "Continuous": 1.0
+    },
+    "StainlessSteel": {
+     "Batch": 2.2,
+     "Continuous": 2.2
+    },
+    "NiAlloy": {
+     "Batch": 4.5,
+     "Continuous": 4.5
+    }
+   }
+  },
+  "SprayDryer": {
+   "size_quantity": "mass_flow",
+   "subtypes": {
+    "CoCurrent": {
+     "K": [
+      4.8,
+      0.7,
+      0.02
+     ],
+     "size_unit": "kg/s",
+     "size_min": 0.05,
+     "size_max": 50.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.6,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "CounterCurrent": {
+     "K": [
+      4.9,
+      0.7,
+      0.02
+     ],
+     "size_unit": "kg/s",
+     "size_min": 0.05,
+     "size_max": 50.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 1.6,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "CoCurrent": 1.0,
+     "CounterCurrent": 1.0
+    },
+    "StainlessSteel": {
+     "CoCurrent": 1.6,
+     "CounterCurrent": 1.6
+    }
+   }
+  },
+  "Fan": {
+   "size_quantity": "volumetric_flow",
+   "subtypes": {
+    "CentrifugalRadial": {
+     "K": [
+      3.5391,
+      -0.3533,
+      0.4477
+     ],
+     "size_unit": "m3/s",
+     "size_min": 1.0,
+     "size_max": 100.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 2.58,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "BackwardCurve": {
+     "K": [
+      3.3471,
+      -0.0734,
+      0.309
+     ],
+     "size_unit": "m3/s",
+     "size_min": 1.0,
+     "size_max": 100.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 2.58,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "AxialVane": {
+     "K": [
+      3.1761,
+      -0.1373,
+      0.3414
+     ],
+     "size_unit": "m3/s",
+     "size_min": 1.0,
+     "size_max": 100.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 2.58,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    },
+    "AxialTube": {
+     "K": [
+      3.0414,
+      -0.3375,
+      0.4722
+     ],
+     "size_unit": "m3/s",
+     "size_min": 1.0,
+     "size_max": 100.0,
+     "B1": 0.0,
+     "B2": 1.0,
+     "F_bare": 2.58,
+     "pressure_unit": "barg",
+     "pressure_ranges": [
+      {
+       "bounds": [
+        null,
+        1000000000.0
+       ],
+       "C": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   },
+   "materials": {
+    "CarbonSteel": {
+     "CentrifugalRadial": 1.0,
+     "BackwardCurve": 1.0,
+     "AxialVane": 1.0,
+     "AxialTube": 1.0
+    },
+    "StainlessSteel": {
+     "CentrifugalRadial": 4.2,
+     "BackwardCurve": 4.2,
+     "AxialVane": 4.2,
+     "AxialTube": 4.2
+    },
+    "Fiberglass": {
+     "CentrifugalRadial": 1.83,
+     "BackwardCurve": 1.83,
+     "AxialVane": 1.83,
+     "AxialTube": 1.83
+    }
+   }
+  }
+ }
+}

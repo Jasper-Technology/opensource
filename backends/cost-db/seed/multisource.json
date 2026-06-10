@@ -1,0 +1,31 @@
+{
+  "_about": "C1 multi-source: SSLW versions of the cleanly-comparable overlap classes (HX area, compressor power) alongside Turton, so blended_purchased_cost can report a value + inter-source range. Vessel/pump are NOT multi-sourced here — SSLW costs them on incompatible bases (vessel by weight from D+L; pump by size-factor Q*sqrt(H)), so a same-size blend isn't apples-to-apples (documented limitation).",
+
+  "equipment_correlations": [
+    {
+      "source": "idaes-sslw", "basis_date": "2006-01-01",
+      "equipment_type": "HeatExchanger", "subtype": "FloatingHead",
+      "functional_form": "sslw_ln", "size_quantity": "area", "size_unit": "ft2",
+      "size_min": 150.0, "size_max": 12000.0,
+      "coeff": {"alpha": [11.9052, -0.8709, 0.09005], "input_scale": 1.1},
+      "currency": "USD", "base_index_name": "CEPCI", "base_index_value": 500, "base_index_year": 2006,
+      "bare_module": null, "pressure_model": null,
+      "notes": "SSLW cost_heat_exchanger floating_head: base = exp(11.9052 - 0.8709*ln(A_ft2*1.1) + 0.09005*ln^2(...)) @ CE500. Second source for HX (cross-check vs Turton)."
+    },
+    {
+      "source": "idaes-sslw", "basis_date": "2006-01-01",
+      "equipment_type": "Compressor", "subtype": "Centrifugal",
+      "functional_form": "sslw_ln", "size_quantity": "power", "size_unit": "hp",
+      "size_min": 200.0, "size_max": 30000.0,
+      "coeff": {"alpha": [7.58, 0.8, 0.0]},
+      "currency": "USD", "base_index_name": "CEPCI", "base_index_value": 500, "base_index_year": 2006,
+      "bare_module": null, "pressure_model": null,
+      "notes": "SSLW cost_compressor centrifugal: base = exp(7.58 + 0.8*ln(work_hp)) @ CE500. Second source for compressor."
+    }
+  ],
+
+  "material_factors": [
+    {"source": "idaes-sslw", "basis_date": "2006-01-01", "equipment_type": "HeatExchanger", "subtype": "FloatingHead", "material": "CarbonSteel", "factor_model": {"kind": "scalar", "value": 1.0}},
+    {"source": "idaes-sslw", "basis_date": "2006-01-01", "equipment_type": "Compressor",    "subtype": "Centrifugal",  "material": "CarbonSteel", "factor_model": {"kind": "scalar", "value": 1.0}}
+  ]
+}

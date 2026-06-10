@@ -1,0 +1,21 @@
+{
+  "_about": "C5 packed-column internals — alternative to trays for packed towers (vacuum/corrosive/low-dP service). Cost = packing volume x unit cost x material, + distributor allowance, installed. Unit costs representative of Turton/Seider packed-tower internals (CEPCI 397 basis); refine with vendor data.",
+
+  "equipment_correlations": [
+    {
+      "source": "turton", "basis_date": "2001-01-01",
+      "equipment_type": "ColumnPacking", "subtype": "Standard",
+      "functional_form": "packing", "size_quantity": "volume", "size_unit": "m3",
+      "size_min": null, "size_max": null,
+      "coeff": {
+        "unit_cost": {"Random": 1500.0, "Structured": 4500.0},
+        "material_factors": {"Metal": 1.0, "Ceramic": 1.3, "Plastic": 0.6},
+        "distributor_frac": 0.15,
+        "install_factor": 1.4
+      },
+      "currency": "USD", "base_index_name": "CEPCI", "base_index_value": 397, "base_index_year": 2001,
+      "bare_module": null, "pressure_model": null,
+      "notes": "Packed-column internals (Turton/Seider, representative). unit_cost USD/m3 @ CEPCI 397: random ~1500, structured ~4500. Handled by costing.cost_packing. distributor 15%, install 1.4."
+    }
+  ]
+}

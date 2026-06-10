@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import health, components, units, jobs, tea
+from app.api.routes import health, components, units, jobs
 from app.api.routes import import_ as import_route
 
 # Optional — heavy IDAES/pyomo-backed routes. Allow local dev without pyomo.
@@ -28,6 +28,17 @@ except ImportError as _idaes_exc:  # pragma: no cover - env-dependent
         "IDAES/pyomo routes unavailable (%s) — TEA + import + units endpoints will still serve.",
         _idaes_exc,
     )
+
+# Optional — cost DB. Only mounted when DATABASE_URL is configured, so the
+# backend still boots fully stateless (simulate/optimize) without a database.
+try:
+    from app.tea import db as tea_db  # type: ignore
+    from app.api.routes import tea as tea_routes  # type: ignore
+    _HAS_TEA = tea_db.is_configured()
+except ImportError as _tea_exc:  # pragma: no cover - env-dependent
+    tea_routes = None  # type: ignore[assignment]
+    _HAS_TEA = False
+    logging.getLogger(__name__).warning("TEA cost routes unavailable (%s)", _tea_exc)
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +127,8 @@ if _HAS_IDAES:
 app.include_router(components.router, prefix="/api", tags=["components"])
 app.include_router(units.router, prefix="/api", tags=["units"])
 app.include_router(jobs.router, prefix="/api", tags=["jobs"])
-app.include_router(tea.router, prefix="/api", tags=["tea"])
+if _HAS_TEA:
+    app.include_router(tea_routes.router, prefix="/api", tags=["tea"])
 app.include_router(import_route.router, prefix="/api", tags=["import"])
 
 

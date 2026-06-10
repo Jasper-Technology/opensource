@@ -98,8 +98,52 @@ export const UnitTypeSchema = z.enum([
   'ThreePhaseSeparator',  // Phase 2 — gas-oil-water (DWSIM-only)
   'Sink',
   'TextBox',
+  'CustomUnit',           // Agent-defined block that delegates to a baseType + overrides
 ]);
 export type UnitType = z.infer<typeof UnitTypeSchema>;
+
+// CustomUnit — an agent-proposed unit op for edge cases not covered by the
+// built-in catalog. It does NOT introduce new physics: at solve time the unit
+// unwraps to its `baseType` with `overrides` merged into params, so all three
+// engines (Jasper, DWSIM, IDAES) keep working unchanged.
+//
+// `sources` and `equations` are user-facing audit trail (rendered on the
+// Validation Card and in NodePanel); the simulator ignores them. A CustomUnit
+// without a customSpec is a validation error — see src/sim/validator.ts.
+export const CustomUnitSourceSchema = z.object({
+  title: z.string(),
+  url: z.string().optional(),
+  doi: z.string().optional(),
+  snippet: z.string().optional(),
+});
+export type CustomUnitSource = z.infer<typeof CustomUnitSourceSchema>;
+
+// Agent-defined equipment sizing for a CustomUnit. `method: 'inherit'` reuses the
+// baseType's built-in correlation; `method: 'formula'` evaluates a sandboxed
+// arithmetic `expression` (whitelisted math + named result variables — see
+// src/sim/sizing/safeEval.ts) to produce `sizeQuantity`. Always flagged
+// "agent-defined" in the UI and never executed as code; `source`/`assumptions`
+// are the audit trail, matching the cost-DB provenance ethos.
+export const CustomSizingSpecSchema = z.object({
+  sizeQuantity: z.enum(['area', 'volume', 'power', 'heat_duty']),
+  method: z.enum(['inherit', 'formula']).default('inherit'),
+  expression: z.string().optional(),                      // required when method === 'formula'
+  variables: z.record(z.string(), z.number()).default({}),// named constants the expression may reference (e.g. tau, U)
+  assumptions: z.array(z.string()).default([]),
+  source: z.string().optional(),
+});
+export type CustomSizingSpec = z.infer<typeof CustomSizingSpecSchema>;
+
+export const CustomUnitSpecSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  baseType: z.string(),                                   // a UnitType (string-typed to avoid circular ref to UnitTypeSchema)
+  overrides: z.record(z.string(), ParamValueSchema).default({}),
+  sources: z.array(CustomUnitSourceSchema).default([]),
+  equations: z.array(z.string()).default([]),             // free-form prose / LaTeX strings
+  sizing: CustomSizingSpecSchema.optional(),              // agent-defined sizing; absent → inherit baseType
+});
+export type CustomUnitSpec = z.infer<typeof CustomUnitSpecSchema>;
 
 export const PhaseSchema = z.enum(['V', 'L', 'VL', 'S']);
 export type Phase = z.infer<typeof PhaseSchema>;
@@ -177,6 +221,7 @@ export const UnitOpNodeSchema = z.object({
   params: z.record(z.string(), ParamValueSchema),
   ports: z.array(PortSchema),
   tags: z.array(z.string()).optional(),
+  customSpec: CustomUnitSpecSchema.optional(),            // set when type === 'CustomUnit'
 });
 export type UnitOpNode = z.infer<typeof UnitOpNodeSchema>;
 
@@ -334,6 +379,7 @@ export const EconomicConfigSchema = z.object({
   electricityPrice: z.number().optional(),
   co2Price: z.number().optional(),
   capexFactor: z.number().optional(),
+  operatingHours: z.number().optional(), // h/yr annualization basis (default 8000)
   notes: z.string().optional(),
 });
 export type EconomicConfig = z.infer<typeof EconomicConfigSchema>;
@@ -364,6 +410,7 @@ export const JasperProjectSchema = z.object({
   cloudSynced: z.boolean().optional(), // true once pushed to Supabase via Share
   collaboratorRole: z.enum(['owner', 'editor', 'viewer']).optional(), // role of current user
   _v: z.number().int().optional(), // monotonic write counter, incremented on every Supabase save
+  customUnitTypes: z.array(CustomUnitSpecSchema).optional(), // reusable CustomUnit definitions (Validation-Card approved)
 });
 export type JasperProject = z.infer<typeof JasperProjectSchema>;
 
@@ -422,6 +469,15 @@ export const JasperActionSchema = z.discriminatedUnion('type', [
     nodeId: z.string(),
     key: z.string(),
     value: ParamValueSchema,
+  }),
+  // Strip a parameter entirely — different from SET_PARAM to "0", which
+  // some units (Flash T, Heater duty, …) treat as a literal zero rather
+  // than "unspec". Use this to make a Flash adiabatic, a Heater
+  // duty-free, etc.
+  z.object({
+    type: z.literal('REMOVE_PARAM'),
+    nodeId: z.string(),
+    key: z.string(),
   }),
   z.object({
     type: z.literal('SET_STREAM_SPEC'),

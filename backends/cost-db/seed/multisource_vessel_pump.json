@@ -1,0 +1,42 @@
+{
+  "_about": "C4: SSLW vessel + pump as second sources, reconciling sizing bases. Vessel: volume -> geometry (assumed L/D=4, t=1.25in, CS density) -> weight -> SSLW exp(poly). Pump: power -> Q via assumed head (50 m, eta 0.7) -> size factor S=Q*sqrt(H) -> SSLW exp(poly). The pump mapping is approximate (head assumption). Handled by costing.sslw_vessel_base / sslw_pump_base.",
+
+  "equipment_correlations": [
+    {
+      "source": "idaes-sslw", "basis_date": "2006-01-01",
+      "equipment_type": "Vessel", "subtype": "Vertical",
+      "functional_form": "sslw_vessel", "size_quantity": "volume", "size_unit": "m3",
+      "size_min": 0.3, "size_max": 520.0,
+      "coeff": {"alpha": [7.0132, 0.18255, 0.02297], "aspect_ratio": 4.0, "thickness_in": 1.25, "density": 0.284},
+      "currency": "USD", "base_index_name": "CEPCI", "base_index_value": 500, "base_index_year": 2006,
+      "bare_module": null, "pressure_model": null,
+      "notes": "SSLW cost_vessel vertical (weight from D,L,t,density; L/D=4 assumed). Second source for Vessel/Vertical."
+    },
+    {
+      "source": "idaes-sslw", "basis_date": "2006-01-01",
+      "equipment_type": "Vessel", "subtype": "Horizontal",
+      "functional_form": "sslw_vessel", "size_quantity": "volume", "size_unit": "m3",
+      "size_min": 0.1, "size_max": 628.0,
+      "coeff": {"alpha": [8.9552, -0.2330, 0.04333], "aspect_ratio": 4.0, "thickness_in": 1.25, "density": 0.284},
+      "currency": "USD", "base_index_name": "CEPCI", "base_index_value": 500, "base_index_year": 2006,
+      "bare_module": null, "pressure_model": null,
+      "notes": "SSLW cost_vessel horizontal. Second source for Vessel/Horizontal."
+    },
+    {
+      "source": "idaes-sslw", "basis_date": "2001-01-01",
+      "equipment_type": "Pump", "subtype": "Centrifugal",
+      "functional_form": "sslw_pump", "size_quantity": "power", "size_unit": "kW",
+      "size_min": 1.0, "size_max": 300.0,
+      "coeff": {"alpha": [9.7171, -0.6019, 0.0519], "head_m": 50.0, "efficiency": 0.7},
+      "currency": "USD", "base_index_name": "CEPCI", "base_index_value": 394, "base_index_year": 2001,
+      "bare_module": null, "pressure_model": null,
+      "notes": "SSLW cost_pump centrifugal (pump less motor), CE394. power->Q via assumed head 50 m -> size factor. APPROXIMATE cross-basis (head assumption). Second source for Pump/Centrifugal."
+    }
+  ],
+
+  "material_factors": [
+    {"source": "idaes-sslw", "basis_date": "2006-01-01", "equipment_type": "Vessel", "subtype": "Vertical",   "material": "CarbonSteel", "factor_model": {"kind": "scalar", "value": 1.0}},
+    {"source": "idaes-sslw", "basis_date": "2006-01-01", "equipment_type": "Vessel", "subtype": "Horizontal", "material": "CarbonSteel", "factor_model": {"kind": "scalar", "value": 1.0}},
+    {"source": "idaes-sslw", "basis_date": "2001-01-01", "equipment_type": "Pump",   "subtype": "Centrifugal", "material": "CarbonSteel", "factor_model": {"kind": "scalar", "value": 1.0}}
+  ]
+}

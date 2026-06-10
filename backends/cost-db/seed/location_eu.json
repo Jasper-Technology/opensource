@@ -1,0 +1,15 @@
+{
+  "_about": "C2: EU location region — exercises the FX and freight/duty driver terms (US-GC/US-MW had both = 1.0). FX from ECB EUR/USD reference rate (real, public); labor/material from Eurostat (representative magnitudes); freight/duty documented. Demonstrates the composed-driver model handles international locations.",
+
+  "sources": [
+    {"slug": "eurostat-ecb", "title": "Eurostat labour cost + ECB EUR/USD reference rate", "source_type": "public_dataset", "license": "Eurostat / ECB public", "url": "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/", "reference_citation": "ECB EUR/USD 2024 reference avg ~1.082; Eurostat Labour Cost Index (construction). Labor/material magnitudes representative.", "accessed_on": "2026-06-06", "notes": "FX is a real ECB figure; labor/material/freight are representative EU-vs-USGC differentials."}
+  ],
+
+  "location_drivers": [
+    {"source": "eurostat-ecb", "basis_date": "2024-01-01", "region": "EU", "driver_type": "labor_rate",     "value": 1.10,  "unit": "dimensionless", "notes": "EU construction labour cost vs US-GC (Eurostat LCI, representative)."},
+    {"source": "eurostat-ecb", "basis_date": "2024-01-01", "region": "EU", "driver_type": "productivity",   "value": 0.97,  "unit": "dimensionless", "notes": "Representative productivity vs US-GC."},
+    {"source": "eurostat-ecb", "basis_date": "2024-01-01", "region": "EU", "driver_type": "material_index", "value": 1.05,  "unit": "dimensionless", "notes": "EU equipment/material index vs US (representative)."},
+    {"source": "eurostat-ecb", "basis_date": "2024-01-01", "region": "EU", "driver_type": "fx",             "value": 1.082, "unit": "dimensionless", "notes": "ECB EUR/USD 2024 reference average ~1.082 (real, public) — currency factor on EUR-denominated cost."},
+    {"source": "eurostat-ecb", "basis_date": "2024-01-01", "region": "EU", "driver_type": "freight_duty",   "value": 1.06,  "unit": "dimensionless", "notes": "Freight + import duty on balance-of-plant components (documented)."}
+  ]
+}

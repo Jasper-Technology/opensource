@@ -10,3 +10,8 @@ pint>=0.24,<1.0
 openpyxl>=3.1,<4.0
 defusedxml>=0.7,<1.0
 anthropic>=0.39,<1.0
+# Cost DB (Postgres; optional at runtime: the backend boots stateless if
+# DATABASE_URL is unset).
+sqlalchemy>=2.0,<3.0
+psycopg[binary]>=3.1,<4.0
+alembic>=1.13,<2.0
